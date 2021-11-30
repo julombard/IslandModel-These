@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 
 # Essai de code de la dynamique locale pour un seul site
-
+#xouxou
 
 #Définition de variables de simulation
 t = np.linspace(0,20, 500) # Donne le tmin, tmax, et le nombre de points qu'on souhaite entre les deux
