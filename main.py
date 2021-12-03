@@ -57,13 +57,13 @@ for i in range(Nb_sites) :
 # On initialise une pop par site, dont une contient un infecté
 Pops = [] # Liste de tuples, un tuple = une pop et contient les valeurs d'effectif
 for i in range(Nb_sites) : # On initialise la metapop de travail et la liste des sorties
-    Pops.append(Init)
-    Metapop_dyn[i].append((100,0))
     if i == Nb_sites-1 :
         Pops.append((100,1,0,0))
         Metapop_dyn[i].append((100, 1))
-print(Metapop_dyn)
-print(Pops)
+    else :
+        Pops.append(Init)
+        Metapop_dyn[i].append((100, 0))
+
 #On décrit le modèle
 for t in range(tsim):  # A chaque tour du modèle
 
@@ -97,10 +97,9 @@ for t in range(tsim):  # A chaque tour du modèle
             Extinct_pop = (0, 0, 0, 0) # Tout le monde meurt
             Pops[index] = Extinct_pop # Et on met à jour la metapop
         else : pass #Sinon on continue tel quel
-        print('pop index', pop[0])
-        for index, list_pop in enumerate(Metapop_dyn) : # Mise a jour des listes de sortie
-            Effectifs = (pop[0], pop[1])
-            Metapop_dyn[index].append(Effectifs)
+        print('pop zero', pop[1])
+        Effectifs = (pop[0], pop[1])
+        Metapop_dyn[index].append(Effectifs)
     print('Sorties', Metapop_dyn)
     # Implémenté ainsi, toute la dynamique est déterministe à l'exception des extinctions qui sont stochastiques... pas ouf (Voir Gillespie)
     # D'autant que ca rend les résultats très dépendants du pas de mesure utilisé...
