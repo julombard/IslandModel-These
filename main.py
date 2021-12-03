@@ -22,7 +22,7 @@ gamma = 1.5 # Taux de guérison / clairance
 alpha = 0.10 # Virulence
 
 #Initialisation d'une population
-dict_pop_init = { 'S' : 100, 'I' : 1}
+dict_pop_init = { 'S' : 100, 'I' : 0}
 Init = dict_pop_init['S'], dict_pop_init['I']
 
 
@@ -54,46 +54,46 @@ plt.legend()
 #Tentative pour un modèle en îles multi-sites
 
 Nb_sites = 10
-tsim = 10
+tsim = 100
 t_petit = np.linspace(0,0.1,2)
 
 # On initialise une pop par site
 Pops = []
-for i in range(Nb_sites) :
+for i in range(Nb_sites-1) :
     Pops.append(Init)
-
+Pops.append((100,1))
 # A ce moment on a besoin de plusieurs choses : Connaître le nombre de migrants
 # Connaitre les valeurs de densités des pops pour chaque site au temps t+dt
 # Appliquer la mortalité aux migrants
 # Les redistribuer équiprobablement dans chaque site
 for t in range(tsim):  # A chaque tour du modèle
-    print('il court il court le furet',Pops)
+    print('Metapopulation',Pops)
     # Calcul du nombre de migrants par site
     Migrant_S = []  # Initialisation des listes qui contiendront les migrants de chaque site
     Migrant_I = []
-    for pop in Pops:
-        print('johnny', pop)
+    for index, pop in enumerate(Pops):
+
         Migrant_S.append(d * pop[0])
-        print('Migrant S', Migrant_S)
-        Migrant_I.append(d * pop[1])
-        print('olalalalalala', type(pop[0]))
+        Migrant_I.append(d * pop[1]) # pop[x]est de type INT
         dynamics = odeint(Continuous_LocalDynamics, pop,
-                          t_petit)  # On résoud le système pour 1 étape avec un pas de temps tout petit, et on remplace les valeurs
-        print('ehehehe', dynamics[1][0], type(dynamics[1][0]))
-        pop[0] = int(dynamics[1][0])# Du coup on récupère la taille de pop au temps suivant, sans compter les immigrants de chaque population
-        pop[1] = dynamics[1][1]
+                          t_petit)  # On résoud le système pour 1 étape avec un pas de temps tout petit on remplace les valeurs
+
+        new_pop = (dynamics[1][0],dynamics[1][1])# On remplace les valeurs, du coup on récupère la taille de pop au temps suivant, sans compter les immigrants de chaque population
+
+
+        Pops[index] = new_pop
     #Calcul du nombre de migrants S qui vont atterir dans chaque patch
-    print('coco pops',Pops)
+
     Nb_mig_s = sum(Migrant_S)
     Nb_mig_s_perpatch = Nb_mig_s / len(Pops)
+
     # Calcul du nombre de migrants I qui vont atterir dans chaque patch
     Nb_mig_i = sum(Migrant_I)
     Nb_mig_i_perpatch = Nb_mig_i / len(Pops)
     #Distribution de ces migrants là
-    for pop in Pops:
-        pop[0] = pop[0] + Nb_mig_s_perpatch
-        pop[1] = pop[1] + Nb_mig_i_perpatch
-
+    #for index, pop in enumerate(Pops):
+        #new_pop = (pop[0] + Nb_mig_s_perpatch, pop[1] + Nb_mig_i_perpatch)
+        #Pops[index] = new_pop
 
 
 
