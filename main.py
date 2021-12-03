@@ -20,11 +20,12 @@ k = 1000 # Capacité de charge du site
 d = 0.05 # Propension à la migration
 gamma = 1.5 # Taux de guérison / clairance
 alpha = 0.10 # Virulence
-rho = 0.1 #
+rho = 0.1 # Dispersal cost
 
 #Initialisation d'une population
 dict_pop_init = { 'S' : 100, 'I' : 0, 'Ms' : 0, 'Mi' : 0}
 Init = dict_pop_init['S'], dict_pop_init['I'], dict_pop_init['Ms'], dict_pop_init['Mi']
+Init_local = dict_pop_init['S'], 1, dict_pop_init['Ms'], dict_pop_init['Mi']
 
 
 def Continuous_LocalDynamics(densite,t) :  # Fonction qui gère la dynamique locale des sites
@@ -39,7 +40,8 @@ def Continuous_LocalDynamics(densite,t) :  # Fonction qui gère la dynamique loc
 
 # On essaie de faire tourner le modèle
 
-dynamics = odeint(Continuous_LocalDynamics, Init, t) # Renvoie un array avec les valeurs de S, I pour chaque point du temps
+dynamics = odeint(Continuous_LocalDynamics, Init_local, t) # Renvoie un array avec les valeurs de S, I pour chaque point du temps
+
 S, I , Ds, Ds = dynamics.T # Sépare l'array en deux listes distinctes
 
 
@@ -56,8 +58,17 @@ plt.legend()
 
 #Tentative pour un modèle en îles multi-sites
 
+def Continuous_Globaldynamics(densite,t) :
+    S, I, Ds, Di = densite
+
+    dS = Ds
+    dI = Di
+
+    return S, I, dS, dI
+
+
 Nb_sites = 10
-tsim = 1000
+tsim = 100
 t_petit = np.linspace(0,1,2) # On prends un point sur un pas très petit pour une résolution pas à pas
 
 # On initialise une pop par site
@@ -81,16 +92,21 @@ for t in range(tsim):  # A chaque tour du modèle
 
         # On remplace les valeurs, du coup on récupère la taille de pop au temps suivant, sans compter les immigrants de chaque population
         Migrant_S.append(dynamics[1][2]) # Extraction du nombre de migrants
+        #print('Migrant S',Migrant_S)
+        #print('Migrant', Migrant_I)
         #print('migrants S', Migrant_S)
         Migrant_I.append(dynamics[1][3])  # pop[x][y] est de type INT et on est contents
-
+        new_pop = (dynamics[1][0],dynamics[1][1], 0, 0) # On remplace les valeurs et on repart sans migrants "non assignés"
+        Pops[index] = new_pop
+        #print('Population après dyn locale', new_pop)
     Nb_mig_s_perpatch = sum(Migrant_S) / Nb_sites
     Nb_mig_i_perpatch = sum(Migrant_I) / Nb_sites
-
+    #print('Migrant S par site',Nb_mig_s_perpatch)
     for index, pop in enumerate(Pops): # Redistribution des migrants
+        #print('population avant dyn globale', pop)
         new_pop = (pop[0]
-                + Nb_mig_s_perpatch,pop[1] + Nb_mig_i_perpatch, 0, 0) # On remplace les valeurs et on repart sans migrants "non assignés"
-        Pops[index] = new_pop
-
-
-
+                ,pop[1], Nb_mig_s_perpatch, Nb_mig_i_perpatch) # On remplace les valeurs et on repart sans migrants "non assignés"
+        #print('pop juuuuuuust avant lODE', new_pop )
+        final_pop = (new_pop[0] + new_pop[2], new_pop[1]+ new_pop[3], 0, 0 )
+        #print('population après dyn globale', final_pop)
+        Pops[index] = final_pop
