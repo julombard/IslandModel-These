@@ -96,3 +96,4 @@ for t in range(tsim):  # A chaque tour du modèle
 
 
 
+
