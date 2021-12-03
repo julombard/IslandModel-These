@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 
 # Essai de code de la dynamique locale pour un seul site
-#xouxou
+
 
 #Définition de variables de simulation
 t = np.linspace(0,20, 500) # Donne le tmin, tmax, et le nombre de points qu'on souhaite entre les deux
@@ -20,24 +20,27 @@ k = 1000 # Capacité de charge du site
 d = 0.05 # Propension à la migration
 gamma = 1.5 # Taux de guérison / clairance
 alpha = 0.10 # Virulence
+rho = 0.1 #
 
 #Initialisation d'une population
-dict_pop_init = { 'S' : 100, 'I' : 0}
-Init = dict_pop_init['S'], dict_pop_init['I']
+dict_pop_init = { 'S' : 100, 'I' : 0, 'Ms' : 0, 'Mi' : 0}
+Init = dict_pop_init['S'], dict_pop_init['I'], dict_pop_init['Ms'], dict_pop_init['Mi']
 
 
 def Continuous_LocalDynamics(densite,t) :  # Fonction qui gère la dynamique locale des sites
-    S, I = densite
+    S, I , Ds, Di = densite
     N = S + I
 
     dS = r * S * (1- N / k) - (beta * S * I) - (d * S) + (gamma * I)
     dI = (beta * S * I) - ((alpha + d + gamma) * I)
-    return dS, dI
+    dDs = d * S
+    dDi = d * I
+    return dS, dI, dDs, dDi
 
 # On essaie de faire tourner le modèle
 
 dynamics = odeint(Continuous_LocalDynamics, Init, t) # Renvoie un array avec les valeurs de S, I pour chaque point du temps
-S, I = dynamics.T # Sépare l'array en deux listes distinctes
+S, I , Ds, Ds = dynamics.T # Sépare l'array en deux listes distinctes
 
 
 # Pour tracer la figure de la dynamique du systeme
@@ -54,14 +57,14 @@ plt.legend()
 #Tentative pour un modèle en îles multi-sites
 
 Nb_sites = 10
-tsim = 100
-t_petit = np.linspace(0,0.1,2)
+tsim = 1000
+t_petit = np.linspace(0,1,2) # On prends un point sur un pas très petit pour une résolution pas à pas
 
 # On initialise une pop par site
 Pops = []
 for i in range(Nb_sites-1) :
     Pops.append(Init)
-Pops.append((100,1))
+Pops.append((100,1,0,0))
 # A ce moment on a besoin de plusieurs choses : Connaître le nombre de migrants
 # Connaitre les valeurs de densités des pops pour chaque site au temps t+dt
 # Appliquer la mortalité aux migrants
@@ -73,27 +76,21 @@ for t in range(tsim):  # A chaque tour du modèle
     Migrant_I = []
     for index, pop in enumerate(Pops):
 
-        Migrant_S.append(d * pop[0])
-        Migrant_I.append(d * pop[1]) # pop[x]est de type INT
         dynamics = odeint(Continuous_LocalDynamics, pop,
                           t_petit)  # On résoud le système pour 1 étape avec un pas de temps tout petit on remplace les valeurs
 
-        new_pop = (dynamics[1][0],dynamics[1][1])# On remplace les valeurs, du coup on récupère la taille de pop au temps suivant, sans compter les immigrants de chaque population
+        # On remplace les valeurs, du coup on récupère la taille de pop au temps suivant, sans compter les immigrants de chaque population
+        Migrant_S.append(dynamics[1][2]) # Extraction du nombre de migrants
+        #print('migrants S', Migrant_S)
+        Migrant_I.append(dynamics[1][3])  # pop[x][y] est de type INT et on est contents
 
+    Nb_mig_s_perpatch = sum(Migrant_S) / Nb_sites
+    Nb_mig_i_perpatch = sum(Migrant_I) / Nb_sites
 
+    for index, pop in enumerate(Pops): # Redistribution des migrants
+        new_pop = (pop[0]
+                + Nb_mig_s_perpatch,pop[1] + Nb_mig_i_perpatch, 0, 0) # On remplace les valeurs et on repart sans migrants "non assignés"
         Pops[index] = new_pop
-    #Calcul du nombre de migrants S qui vont atterir dans chaque patch
-
-    Nb_mig_s = sum(Migrant_S)
-    Nb_mig_s_perpatch = Nb_mig_s / len(Pops)
-
-    # Calcul du nombre de migrants I qui vont atterir dans chaque patch
-    Nb_mig_i = sum(Migrant_I)
-    Nb_mig_i_perpatch = Nb_mig_i / len(Pops)
-    #Distribution de ces migrants là
-    #for index, pop in enumerate(Pops):
-        #new_pop = (pop[0] + Nb_mig_s_perpatch, pop[1] + Nb_mig_i_perpatch)
-        #Pops[index] = new_pop
 
 
 
