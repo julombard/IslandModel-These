@@ -46,7 +46,7 @@ Nb_sites = 100
 tsim = 100
 t_petit = np.linspace(0,1,2) # On prends un point sur un pas très petit pour une résolution pas à pas
 rho = 0.1 # Dispersal cost, utile car paramètres métapop exclusif
-epsilon = 0.01 # Extinction probability, utile car exclusif metapop
+epsilon = 0.1 # Extinction probability, utile car exclusif metapop
 
 ## Initialisation pour le recueil des sorties
 ## On crée une liste qui contient une armada de listes qui vont contenir la dynamique de chaque site #Listception

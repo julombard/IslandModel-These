@@ -34,16 +34,16 @@ States <- read_csv("Island_outputs_states.csv")
 Count_states = data.frame()
 for (i in 1:length(States))
 {
-  Count_states[i,1] = i
-  Count_states[i,2] = sum(States[i]=='DFE')
-  Count_states[i,3] = sum(States[i]=='END')
-  Count_states[i,4] = sum(States[i]=='VIDE')
-  Count_states[i,5] = sum(States[i]=='NA')
+  Count_states[i,1] = States[i,1]
+  Count_states[i,2] = sum(States[i,]=='DFE')
+  Count_states[i,3] = sum(States[i,]=='END')
+  Count_states[i,4] = sum(States[i,]=='VIDE')
+  Count_states[i,5] = sum(States[i,]=='NA')
   }
 colnames(Count_states)<- c("t","DFE", "END", "VIDE", "NA") # Renommer les colonnes correctement sinon c'est moche
 
 
 # Graphe de la dynamique des états des sites
-plot(Count_states$t, Count_states$DFE, type = 'l', xlab = 'temps', ylab = 'Densité de sites', ylim = c(0, 100))
+plot(Count_states$t, Count_states$DFE, type = 'l', xlab = 'temps', ylab = 'Densité de sites',xlim = c(0, 100), ylim = c(0, 100))
 lines(Count_states$END)
 lines(Count_states$VIDE)
