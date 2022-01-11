@@ -2,6 +2,7 @@
 
 #Un tas d'imports +/- rock'n'roll
 from copy import deepcopy
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -41,11 +42,11 @@ plt.legend()
 ############################ MODELE VERSION ILES INFINIES (Fonctionnel)#################################################
 ########################################################################################################################
 
-Nb_sites = 2
-tsim = 10
+Nb_sites = 100
+tsim = 1000
 t_petit = np.linspace(0,1,2) # On prends un point sur un pas très petit pour une résolution pas à pas
 rho = 0.1 # Dispersal cost, utile car paramètres métapop exclusif
-epsilon = 0.1 # Extinction probability, utile car exclusif metapop
+epsilon = 0.01 # Extinction probability, utile car exclusif metapop
 
 ## Initialisation pour le recueil des sorties
 ## On crée une liste qui contient une armada de listes qui vont contenir la dynamique de chaque site
@@ -67,6 +68,7 @@ for i in range(Nb_sites) : # On initialise la metapop de travail et la liste des
 
 #On décrit le modèle
 for t in range(tsim):  # A chaque tour du modèle
+    print("Loading"+ str(t)+"sur"+str(tsim))
 
     #print('Metapopulation',Pops) # Ce print est très pratique, gardons le !
 
@@ -92,17 +94,56 @@ for t in range(tsim):  # A chaque tour du modèle
         final_pop = (new_pop[0] + new_pop[2], new_pop[1]+ new_pop[3], 0, 0 ) # On range les immigrants dans S, I et on repart avec 0 migrants "non assignés"
         Pops[index] = final_pop # Mise à jour de la metapop
 
-        #On détermine ensuite si le site s'éteint
+        #On détermine ensuite si le site s'éteint (seule composante stochastique)
         p = np.random.uniform()
         if p < epsilon :
             Extinct_pop = (0, 0, 0, 0) # Tout le monde meurt
             Pops[index] = Extinct_pop # Et on met à jour la metapop
         else : pass #Sinon on continue tel quel
-        print('pop zero', pop[1])
+        #print('pop zero', pop[1])
         Effectifs = (pop[0], pop[1])
         Metapop_dyn[index].append(Effectifs)
-    print('Sorties', Metapop_dyn)
-    # Implémenté ainsi, toute la dynamique est déterministe à l'exception des extinctions qui sont stochastiques... pas ouf (Voir Gillespie)
+    #print('Sorties', Metapop_dyn)
+    # Implémenté ainsi, toute la dynamique est déterministe à l'exception des extinctions qui sont stochastiques... pas ouf (Voir Gillespie et tau-leaping)
     # D'autant que ca rend les résultats très dépendants du pas de mesure utilisé...
 
-# Mise en forme des sorties pour tracé de figures
+# Mise en forme des sorties pour tracé de figures sur l'ami Rstudio
+#Création d'un fichier CSV de sortie, qui va contenir un dataframe pandas
+
+#Détermination des en-têtes colonne du DF
+Header = []
+for i in range(Nb_sites) :
+    Header.append("S"+str(i))
+    Header.append("I"+str(i))
+#print(Header)
+
+#Détermination des Index ligne (temps)
+Index_row = []
+for i in range(tsim+1) :
+    Index_row.append("t"+str(i))
+#print(Index_row)
+
+#print(Metapop_dyn[0])
+#print(len(Metapop_dyn[0]))
+#On crée un array qui va contenir les valeurs de chaque ligne
+Values = []
+for i in Metapop_dyn : # Pour chaque population locale
+    list_S = []
+    list_I = []
+    for j in i : # POur chaque temps calculé
+        list_S.append(j[0]) # S(t)
+        list_I.append(j[1]) # I(t)
+
+    Values.append(list_S)
+    Values.append(list_I)
+
+tableau = np.array(Values)
+
+#On crée le dataframe qui sera converti en .csv
+My_DF = pd.DataFrame(data= tableau, index=Header, columns=Index_row) # Oups, il est a l'envers
+Final_DF = My_DF.transpose()
+print(Final_DF) # C'est ok
+
+#Création du .csv
+path = os.getcwd()
+Final_DF.to_csv('Island_utputs.csv')
