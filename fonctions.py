@@ -1,5 +1,5 @@
 
-def Continuous_LocalDynamics(densite,t) :  # Fonction qui gère la dynamique locale des sites
+def Continuous_LocalDynamics(densite,t) :  # Fonction qui gère la dynamique locale des sites (résouds EDO)
     # Définition des paramètres du modèle local
     beta = 0.005  # Taux de contact infectieux
     r = 1.5  # Taux de reproduction per capita

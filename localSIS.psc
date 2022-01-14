@@ -1,43 +1,41 @@
 # Stochastic Simulation Algorithm input file
-# Doit être un fichier d'entrée de base de donnée (.psc)
-# Essai pour un site 
 # S --> I --> S
 
 # Reactions
-R1: # Reproduction des individus S
+ReproductionS: 
 S > {2} S
 r*S
 
-R2 : #Mort des individus S
+MortS: 
 S > $pool
 r*S*(S+I)/k
 
-R3: #Infection
+Infection: 
 S > I
 beta * S * I
 
-R4: #Migration S
+MigrationS: 
 S > $pool
 d * S
 
-R5: #Guérison
+Guerison: 
 I > S
 gamma * I
 
-R6: #Mort d'un infecté
+MortI: 
 I > $pool
 alpha * I
 
-R7 : # Migration infecté
+MigrationI: # Migration infecté
 I > $pool
 d* I
 # Fixed species
 
-# Variable species
+# InitVar
 S = 999
 I = 1
 
-# Parameters
+# InitPar
 beta = 0.005  # Taux de contact infectieux
 r = 1.5  # Taux de reproduction per capita
 k = 1000  # Capacité de charge du site
