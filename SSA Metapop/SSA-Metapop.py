@@ -106,6 +106,7 @@ def ComputePropensitiesAndCriticals(Metapop): # Compute propensities for all eve
         list_Propensities.append(prop7)
         crit = IsCritical(I, prop7)
         list_criticals.append(crit)
+
     propensities = np.array(list_Propensities) # On transvase dans un array parce que c'est mieux
     Sum_propensities = np.sum(propensities)
     Criticals = np.array(list_criticals)
@@ -116,7 +117,19 @@ Propensities, SumProp, Criticals = ComputePropensitiesAndCriticals(Metapop)
 
 
 def GetTauPrime(xi, propensity, criticals):
+    # Traduction de l'équation mathématique en français
+    # Pour chaque évènement NON critique
+    # On calcule pour chaque espèce la dérivée de la fonction de propensity par rapport a l'espèce, qu'on multiplie
+    # par le vecteur de changement d'état
 
+
+    #Le résultat est remultiplié par la propensity pour avoir mu
+
+
+    #Le carré du résultats est multiplié par la propensity pour avoir sigma
+
+
+    # Le choix du tau est le minimum entre deux trucs, l'un fait à partir de mu, l'autre de sigma
 
 
     return 0
