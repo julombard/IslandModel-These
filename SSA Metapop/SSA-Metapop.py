@@ -152,16 +152,23 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     print('Les S', Sarray)
     Iarray= np.array(Ilist)
 
+    #Specifier la taille des matrices de sortie à l'avance
+    Nbevents = 7
+    NbPops = len(Sarray)
+    NbSpecies = len(Metapop) * len(Metapop[0])
 
-    StateChangeMatrixS = np.empty(1)
-    StateChangeMatrixI = np.empty(1)
-    MatrixPropensitiesS = np.empty(1)
-    MatrixPropensitiesI = np.empty(1)
-    NbPops = len(Metapop)
-    NbSpecies = len(Metapop)*len(Metapop[0])
+    Nrow = Nbevents*NbPops
+    Ncol = NbSpecies
+
+    StateChangeMatrixS = np.zeros((Nrow, Ncol))
+    StateChangeMatrixI = np.zeros((Nrow, Ncol))
+    MatrixPropensitiesS = np.zeros((Nrow, Ncol))
+    MatrixPropensitiesI = np.zeros((Nrow, Ncol))
+
     print('Nombre de sites', NbPops)
     print('Nombre entités', NbSpecies)
-
+    print('taille de matrice', StateChangeMatrixI.size)
+    print('Taille de boucle', len(Sarray) )
     for specie in range(len(Sarray)) :
         propensities_I = np.zeros(NbSpecies)
         StatechangeVector_I = np.zeros(NbSpecies)
@@ -180,77 +187,77 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         #Reproduction S
         prop = r* S
         propensities_S[specie] = prop
-        np.append(MatrixPropensitiesS, propensities_S)
+        MatrixPropensitiesS[specie] = propensities_S
 
         changestate = +1
         StatechangeVector_S[specie] = changestate
-        np.append(StateChangeMatrixS, StatechangeVector_S)
+        StateChangeMatrixS[specie] = StatechangeVector_S
 
         #Mort S
         prop = r * S * (S+I) /k
         propensities_S[specie] = prop
-        np.append(MatrixPropensitiesS, propensities_S)
+        MatrixPropensitiesS[specie] = propensities_S
 
         changestate = -1
         StatechangeVector_S[specie] = changestate
-        np.append(StateChangeMatrixS, StatechangeVector_S)
+        StateChangeMatrixS[specie] = StatechangeVector_S
 
         #Migration S
         prop = d * S
         propensities_S[specie] = prop
-        np.append(MatrixPropensitiesS, propensities_S)
+        MatrixPropensitiesS[specie] = propensities_S
 
         changestate = -1
         StatechangeVector_S[specie] = changestate
-        np.append(StateChangeMatrixS, StatechangeVector_S)
+        StateChangeMatrixS[specie] = StatechangeVector_S
 
         #Migration I
 
         prop = d * I
         propensities_I[specie] = prop
-        np.append(MatrixPropensitiesI, propensities_I)
+        MatrixPropensitiesI[specie] = propensities_I
 
         changestate = -1
         StatechangeVector_I[specie] = changestate
-        np.append(StateChangeMatrixI, StatechangeVector_I)
+        StateChangeMatrixI[specie]= StatechangeVector_I
 
         # Mort I
         prop = alpha * I
         propensities_I[specie] = prop
-        np.append(MatrixPropensitiesI, propensities_I)
+        MatrixPropensitiesI[specie] = propensities_I
 
         changestate = -1
         StatechangeVector_I[specie] = changestate
-        np.append(StateChangeMatrixI, StatechangeVector_I)
+        StateChangeMatrixI[specie]= StatechangeVector_I
 
         #Guérison I
 
         prop = alpha * I
         propensities_I[specie] = prop
-        np.append(MatrixPropensitiesI, propensities_I)
+        MatrixPropensitiesI[specie] = propensities_I
 
         changestateS = -1
         changestateI = +1
         StatechangeVector_I[specie] = changestateI
-        np.append(StateChangeMatrixI, StatechangeVector_I)
+        StateChangeMatrixI[specie]= StatechangeVector_I
 
         StatechangeVector_S[specie] = changestateS
-        np.append(StateChangeMatrixS, StatechangeVector_S)
+        StateChangeMatrixS[specie] = StatechangeVector_S
 
         #Infection
 
         prop = beta * S * I
         propensities_S[specie] = prop
-        np.append(MatrixPropensitiesS, propensities_I)
+        MatrixPropensitiesS[specie] = propensities_S
 
         changestateS = -1
         changestateI = +1
 
         StatechangeVector_I[specie] = changestateI
-        np.append(StateChangeMatrixI, StatechangeVector_I)
+        StateChangeMatrixI[specie]= StatechangeVector_I
 
         StatechangeVector_S[specie] = changestateS
-        np.append(StateChangeMatrixS, StatechangeVector_S)
+        StateChangeMatrixS[specie] = StatechangeVector_S
 
     return StateChangeMatrixS, StateChangeMatrixI, MatrixPropensitiesS, MatrixPropensitiesI
 
@@ -258,4 +265,4 @@ StateMatrixS, StateMatrixI, PropS, PropI = GetMainMatrix(Metapop)
 
 print('Matrice de changement detat S', StateMatrixS)
 
-print('Matrice de proba S', PropS)
+print('Matrice de proba S', PropI)
