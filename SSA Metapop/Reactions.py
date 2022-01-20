@@ -1,43 +1,15 @@
+import numpy as np
+import stochpy
+from copy import deepcopy
 
-############# Définition des réactions #####################
+def Set_metapop(taillepop, nbsites): #Initialise une métapopulation de nbsites sites contenant chacun taillepop individus, un site aléatoire contiendra une individu infecté
+    Metapop=[]
 
-# Reproduction S
-#Rate et Stoechiometrie
-r*S
-S += 1
+    for i in range(nbsites):
+        if i == 0: Metapop.append([taillepop-1,1])
+        else :Metapop.append([taillepop,0])
+    Metapoparray = np.array(Metapop) # Les array sont stockés dans des blocs mémoire contigus et ca devrait nous accélérer entre 'un peu' et 'pas mal'
+    return Metapoparray
 
-# Mort S
-r*S*(S+I)/k
-S -= 1
-
-#Infection
-beta * S * I
-I += 1
-S-= 1
-
-Migration S
-d * S
-S-=1
-#Sélection du site receveur
-Site = random.randint(1, len(Metapop))
-Metapop[Site][0] += 1
-
-#Guerison:
-gamma * I
-I+= 1
-S -= 1
-
-#Mort I
-alpha * I
-I -= 1
-
-# Migration I
-d* I
-I -= I
-#Sélection du site receveur
-Site = random.randint(1, len(Metapop))
-Metapop[Site][1] += 1
-
-
-
-
+Metapopulation = Set_metapop(100,10)
+print(Metapopulation)

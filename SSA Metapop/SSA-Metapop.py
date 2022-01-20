@@ -1,4 +1,5 @@
 # Algorithme de simulation stochastique pour les métapopulations
+import numpy
 import numpy as np
 import stochpy
 from copy import deepcopy
@@ -11,6 +12,8 @@ stochpy.SSA
 # Si l'évènement est "migration" on doit définir un site d'arrivée, puis mettre sa population à jour
 
 # Modified Poisson Tau leap algorithm from cao et. al. (2005)
+
+# La sélection de tau est basée de "Efficient step size selection for tau leaping simulation", cao et al (2006)
 
 
 #Définition des paramètres du modèle
@@ -36,7 +39,7 @@ def Set_metapop(taillepop, nbsites): #Initialise une métapopulation de nbsites 
     return Metapoparray
 
 Metapop = Set_metapop(100, 10) # Définir une métapop en moins de temps qu'il n'en faut pour définir la fonction !
-
+print('mes couilles', Metapop)
 
 def Tauleap4Metapop() : # Will be used someday, or maybe not
     return 0
@@ -113,7 +116,7 @@ def ComputePropensitiesAndCriticals(Metapop): # Compute propensities for all eve
 
     return propensities, Sum_propensities, Criticals
 
-Propensities, SumProp, Criticals = ComputePropensitiesAndCriticals(Metapop)
+#Propensities, SumProp, Criticals = ComputePropensitiesAndCriticals(Metapop)
 
 
 def GetTauPrime(xi, propensity, criticals):
@@ -133,3 +136,126 @@ def GetTauPrime(xi, propensity, criticals):
 
 
     return 0
+
+
+
+def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensities et celle qui contient les vecteurs de changement d'états
+
+    #Séparation des S et I par convenance
+    Slist = []
+    Ilist = []
+
+    for pop in Metapop :
+        Slist.append(pop[0])
+        Ilist.append(pop[1])
+    Sarray = np.array(Slist)
+    print('Les S', Sarray)
+    Iarray= np.array(Ilist)
+
+
+    StateChangeMatrixS = np.empty(1)
+    StateChangeMatrixI = np.empty(1)
+    MatrixPropensitiesS = np.empty(1)
+    MatrixPropensitiesI = np.empty(1)
+    NbPops = len(Metapop)
+    NbSpecies = len(Metapop)*len(Metapop[0])
+    print('Nombre de sites', NbPops)
+    print('Nombre entités', NbSpecies)
+
+    for specie in range(len(Sarray)) :
+        propensities_I = np.zeros(NbSpecies)
+        StatechangeVector_I = np.zeros(NbSpecies)
+
+        propensities_S = np.zeros(NbSpecies)
+        StatechangeVector_S = np.zeros(NbSpecies)
+
+        # On rempli deux array de taille Nbspecie
+        #L'un contient les propensity de chaque évènement
+        #L'autre contient les changements d'états
+
+        S = Sarray[specie]
+        I = Iarray[specie]
+
+        ##### On décline tous les évènements possibles pour remplir les changements d'états associés + propensity
+        #Reproduction S
+        prop = r* S
+        propensities_S[specie] = prop
+        np.append(MatrixPropensitiesS, propensities_S)
+
+        changestate = +1
+        StatechangeVector_S[specie] = changestate
+        np.append(StateChangeMatrixS, StatechangeVector_S)
+
+        #Mort S
+        prop = r * S * (S+I) /k
+        propensities_S[specie] = prop
+        np.append(MatrixPropensitiesS, propensities_S)
+
+        changestate = -1
+        StatechangeVector_S[specie] = changestate
+        np.append(StateChangeMatrixS, StatechangeVector_S)
+
+        #Migration S
+        prop = d * S
+        propensities_S[specie] = prop
+        np.append(MatrixPropensitiesS, propensities_S)
+
+        changestate = -1
+        StatechangeVector_S[specie] = changestate
+        np.append(StateChangeMatrixS, StatechangeVector_S)
+
+        #Migration I
+
+        prop = d * I
+        propensities_I[specie] = prop
+        np.append(MatrixPropensitiesI, propensities_I)
+
+        changestate = -1
+        StatechangeVector_I[specie] = changestate
+        np.append(StateChangeMatrixI, StatechangeVector_I)
+
+        # Mort I
+        prop = alpha * I
+        propensities_I[specie] = prop
+        np.append(MatrixPropensitiesI, propensities_I)
+
+        changestate = -1
+        StatechangeVector_I[specie] = changestate
+        np.append(StateChangeMatrixI, StatechangeVector_I)
+
+        #Guérison I
+
+        prop = alpha * I
+        propensities_I[specie] = prop
+        np.append(MatrixPropensitiesI, propensities_I)
+
+        changestateS = -1
+        changestateI = +1
+        StatechangeVector_I[specie] = changestateI
+        np.append(StateChangeMatrixI, StatechangeVector_I)
+
+        StatechangeVector_S[specie] = changestateS
+        np.append(StateChangeMatrixS, StatechangeVector_S)
+
+        #Infection
+
+        prop = beta * S * I
+        propensities_S[specie] = prop
+        np.append(MatrixPropensitiesS, propensities_I)
+
+        changestateS = -1
+        changestateI = +1
+
+        StatechangeVector_I[specie] = changestateI
+        np.append(StateChangeMatrixI, StatechangeVector_I)
+
+        StatechangeVector_S[specie] = changestateS
+        np.append(StateChangeMatrixS, StatechangeVector_S)
+
+    return StateChangeMatrixS, StateChangeMatrixI, MatrixPropensitiesS, MatrixPropensitiesI
+
+StateMatrixS, StateMatrixI, PropS, PropI = GetMainMatrix(Metapop)
+
+print('Matrice de changement detat S', StateMatrixS)
+
+print('Matrice de proba S', PropS)
