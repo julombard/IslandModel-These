@@ -1,6 +1,8 @@
 # Algorithme de simulation stochastique pour les métapopulations
+import os
 import numpy
 import numpy as np
+import pandas as pd
 import stochpy
 from copy import deepcopy
 
@@ -39,7 +41,7 @@ def Set_metapop(taillepop, nbsites): #Initialise une métapopulation de nbsites 
     return Metapoparray
 
 Metapop = Set_metapop(100, 10) # Définir une métapop en moins de temps qu'il n'en faut pour définir la fonction !
-print('mes couilles', Metapop)
+print('La métapop', Metapop)
 
 def Tauleap4Metapop() : # Will be used someday, or maybe not
     return 0
@@ -168,7 +170,7 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     print('Nombre de sites', NbPops)
     print('Nombre entités', NbSpecies)
     print('taille de matrice', StateChangeMatrixI.size)
-    print('Taille de boucle', len(Sarray) )
+    print('Taille de boucle', range(len(Sarray)) )
     for specie in range(len(Sarray)) :
         propensities_I = np.zeros(NbSpecies)
         StatechangeVector_I = np.zeros(NbSpecies)
@@ -183,86 +185,103 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         S = Sarray[specie]
         I = Iarray[specie]
 
+        # Pour que les bons index soient remplis
+        Index = Nbevents * specie # Va de Nbevent en Nbevent en partant de zéro
+
         ##### On décline tous les évènements possibles pour remplir les changements d'états associés + propensity
         #Reproduction S
         prop = r* S
         propensities_S[specie] = prop
-        MatrixPropensitiesS[specie] = propensities_S
+        MatrixPropensitiesS[Index] = propensities_S
 
         changestate = +1
         StatechangeVector_S[specie] = changestate
-        StateChangeMatrixS[specie] = StatechangeVector_S
+        StateChangeMatrixS[Index] = StatechangeVector_S
 
+        Index += 1
         #Mort S
         prop = r * S * (S+I) /k
         propensities_S[specie] = prop
-        MatrixPropensitiesS[specie] = propensities_S
+        MatrixPropensitiesS[Index] = propensities_S
 
         changestate = -1
         StatechangeVector_S[specie] = changestate
-        StateChangeMatrixS[specie] = StatechangeVector_S
+        StateChangeMatrixS[Index] = StatechangeVector_S
 
+        Index += 1
         #Migration S
         prop = d * S
         propensities_S[specie] = prop
-        MatrixPropensitiesS[specie] = propensities_S
+        MatrixPropensitiesS[Index] = propensities_S
 
         changestate = -1
         StatechangeVector_S[specie] = changestate
-        StateChangeMatrixS[specie] = StatechangeVector_S
-
+        StateChangeMatrixS[Index] = StatechangeVector_S
+        Index += 1
         #Migration I
 
         prop = d * I
         propensities_I[specie] = prop
-        MatrixPropensitiesI[specie] = propensities_I
+        MatrixPropensitiesI[Index] = propensities_I
 
         changestate = -1
         StatechangeVector_I[specie] = changestate
-        StateChangeMatrixI[specie]= StatechangeVector_I
+        StateChangeMatrixI[Index]= StatechangeVector_I
 
+        Index += 1
         # Mort I
         prop = alpha * I
         propensities_I[specie] = prop
-        MatrixPropensitiesI[specie] = propensities_I
+        MatrixPropensitiesI[Index] = propensities_I
 
         changestate = -1
         StatechangeVector_I[specie] = changestate
-        StateChangeMatrixI[specie]= StatechangeVector_I
+        StateChangeMatrixI[Index]= StatechangeVector_I
 
+        Index += 1
         #Guérison I
 
         prop = alpha * I
         propensities_I[specie] = prop
-        MatrixPropensitiesI[specie] = propensities_I
+        MatrixPropensitiesI[Index] = propensities_I
 
         changestateS = -1
         changestateI = +1
         StatechangeVector_I[specie] = changestateI
-        StateChangeMatrixI[specie]= StatechangeVector_I
+        StateChangeMatrixI[Index]= StatechangeVector_I
 
         StatechangeVector_S[specie] = changestateS
-        StateChangeMatrixS[specie] = StatechangeVector_S
+        StateChangeMatrixS[Index] = StatechangeVector_S
 
+        Index += 1
         #Infection
 
         prop = beta * S * I
         propensities_S[specie] = prop
-        MatrixPropensitiesS[specie] = propensities_S
+        MatrixPropensitiesS[Index] = propensities_S
 
         changestateS = -1
         changestateI = +1
 
         StatechangeVector_I[specie] = changestateI
-        StateChangeMatrixI[specie]= StatechangeVector_I
+        StateChangeMatrixI[Index]= StatechangeVector_I
 
         StatechangeVector_S[specie] = changestateS
-        StateChangeMatrixS[specie] = StatechangeVector_S
+        StateChangeMatrixS[Index] = StatechangeVector_S
 
-    return StateChangeMatrixS, StateChangeMatrixI, MatrixPropensitiesS, MatrixPropensitiesI
+    StateChangeMatrix = np.concatenate((StateChangeMatrixS, StateChangeMatrixI), axis = 1)
+    MatrixPropensities = np.concatenate((MatrixPropensitiesS, MatrixPropensitiesI), axis = 1)
 
-StateMatrixS, StateMatrixI, PropS, PropI = GetMainMatrix(Metapop)
+    return StateChangeMatrix, MatrixPropensities
 
-print('Matrice de changement detat S', StateMatrixS)
+StateMatrix, Props = GetMainMatrix(Metapop)
+print('Taille matrice', StateMatrix.size)
+print('Matrice de changement detat ', StateMatrix)
 
-print('Matrice de proba S', PropI)
+print('Matrice de proba ', Props)
+# On vérifie que la matrice à bien la tronche espérée
+path = os.getcwd()
+print(path)
+Data = pd.DataFrame(data= Props)
+print(Data)
+Data.to_csv('Matrice_propensities.csv')
