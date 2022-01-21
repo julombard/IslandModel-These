@@ -278,6 +278,7 @@ StateMatrix, Props = GetMainMatrix(Metapop)
 print('Taille matrice', StateMatrix.size)
 print('Matrice de changement detat ', StateMatrix)
 
+
 print('Matrice de proba ', Props)
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
