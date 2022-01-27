@@ -247,8 +247,8 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         propensities_I[specie] = prop
         MatrixPropensitiesI[Index] = propensities_I
 
-        changestateS = -1
-        changestateI = +1
+        changestateS = +1
+        changestateI = -1
         StatechangeVector_I[specie] = changestateI
         StateChangeMatrixI[Index]= StatechangeVector_I
 
