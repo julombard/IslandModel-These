@@ -153,7 +153,6 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         Slist.append(pop[0])
         Ilist.append(pop[1])
     Sarray = np.array(Slist)
-    print('Les S', Sarray)
     Iarray= np.array(Ilist)
 
     #Specifier la taille des matrices de sortie à l'avance
@@ -169,10 +168,10 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     MatrixPropensitiesS = np.zeros((Nrow, Ncol))
     MatrixPropensitiesI = np.zeros((Nrow, Ncol))
 
-    print('Nombre de sites', NbPops)
-    print('Nombre entités', NbSpecies)
-    print('taille de matrice', StateChangeMatrixI.size)
-    print('Taille de boucle', range(len(Sarray)) )
+    #print('Nombre de sites', NbPops)
+    #print('Nombre entités', NbSpecies)
+    #print('taille de matrice', StateChangeMatrixI.size)
+    #print('Taille de boucle', range(len(Sarray)) )
     for specie in range(len(Sarray)) :
         propensities_I = np.zeros(NbPops)
         StatechangeVector_I = np.zeros(NbPops)
@@ -277,8 +276,7 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     return StateChangeMatrix, MatrixPropensities
 
 StateMatrix, Props = GetMainMatrix(Metapop)
-print('Taille matrice', StateMatrix.size)
-print('Matrice de changement detat ', StateMatrix)
+
 
 def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée respectivement : Vecteur, Matrice, matrice
     ncrit = 11
@@ -287,25 +285,33 @@ def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée res
     Critical_Matrix = np.zeros(dim_matrix)
     for index, effectif in enumerate(effectifs):
         if effectif < ncrit : list_Indexcriticals.append(index)
-    print('BONJOUR',list_Indexcriticals) # OK
-
     for i in list_Indexcriticals : # Pour chaque pop critique
-        print('VOICI LE I',i)
+
         for j in range(len(propensities)): # On regarde si aj > 0 ET vij < 0
             if propensities[j,i] > 0 and statechange[j,i] <0 : Critical_Matrix[j,i] =1
             else : pass
-    print('REBONJOUR', Critical_Matrix)
     return Critical_Matrix # Renvoie une matrice de booléens
 
-def ComputeMuSigma(propesities, statechange, criticals):
+def ComputeMuSigma(propensities, statechange, criticals):
     #Renvoie les vecteurs mu et sigma pour chaque pop et réaction critique
-
-
-
-    return 0
+    Crtical_pos = np.where(criticals==1) # Pour éviter de faire encore une boucle parce que ça rame sec
+    Crit_row = Crtical_pos[0]
+    print('HOLA MUCHACHO', type(Crit_row[0]))
+    Crit_col = Crtical_pos[1]
+    mu_i = []
+    sigma_i = []
+    for i in range(len(Crit_row)): # Pour chaque critique
+        mu_i.append(abs(propensities[Crit_row[i],Crit_col[i]] * statechange[Crit_row[i],Crit_col[i]])) # Calcul des |mus|
+        sigma_i.append(propensities[Crit_row[i],Crit_col[i]] * statechange[Crit_row[i],Crit_col[i]]**2) # Calcul des sigma
+    mus = np.array(mu_i)
+    sigmas = np.array(sigma_i)
+    return mus, sigmas
 les_xi = Get_xi(Metapop)
 Criticals = GetCriticals(les_xi, Props, StateMatrix)
-print('Matrice de proba ', Props)
+mus, sigmas = ComputeMuSigma(Props, StateMatrix, Criticals)
+print('Les Mu', mus)
+print('Les sigmas', sigmas)
+
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
 print(path)
