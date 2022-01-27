@@ -46,14 +46,6 @@ print('La métapop', Metapop)
 def Tauleap4Metapop() : # Will be used someday, or maybe not
     return 0
 
-def IsCritical(xi,propensity) : # Détermine si une réaction est critique (renvoie un booléen)
-    # Ncrit est défini un peu à la louche, Cao dit " entre 2 et 20 " , donc on va partir sur 11
-    # Dans ce modèle on a toujours Lj = xi donc c'est pratique
-    Ncrit = 11
-    iscritical = 0
-    if propensity > 0 and xi <= Ncrit : iscritical = 1
-    else : pass
-    return iscritical
 def Get_xi(Metapop) : # Get density values of each subpoppulation of each site
     list_si = []
     list_ii = []
@@ -63,62 +55,6 @@ def Get_xi(Metapop) : # Get density values of each subpoppulation of each site
     list_xi = list_si+list_ii
     xi = np.array(list_xi)
     return xi
-
-def ComputePropensitiesAndCriticals(Metapop): # Compute propensities for all events
-    #Metapop doit être un array de taille quelconque qui contient des listes de taille 2 [S,I]
-
-    list_Propensities = []
-    list_criticals = []
-
-    for pop in Metapop : # Pour chaque population
-        S = pop[0] # ON récupère son nombre de susceptibles
-        I = pop[1] # Idem pour les infectés
-
-        # On passe en revue tout ce qui peut se produire et on en détermine les chances
-        # prop x = proba, et ensuite on ajoute la propensity à une liste qui les contiendra toutes
-        # Avec la valeur de xi et de propensity, on détermine si la réaction est critique
-
-        # Reproduction S
-        prop1 = r*S
-        list_Propensities.append(prop1)
-        crit = IsCritical(S, prop1)
-        list_criticals.append(crit)
-        # Mort S
-        prop2 = r*S*(S+I)/k
-        list_Propensities.append(prop2)
-        crit = IsCritical(S, prop2)
-        list_criticals.append(crit)
-        # Infection
-        prop3=beta * S * I
-        list_Propensities.append(prop3)
-        crit = IsCritical(S, prop3)
-        list_criticals.append(crit)
-        #MigrationS
-        prop4=d * S
-        list_Propensities.append(prop4)
-        crit = IsCritical(S, prop4)
-        list_criticals.append(crit)
-        # Guerison:
-        prop5=gamma * I
-        list_Propensities.append(prop5)
-        crit = IsCritical(I, prop5)
-        list_criticals.append(crit)
-        # Mort I
-        prop6=alpha * I
-        list_Propensities.append(prop6)
-        crit = IsCritical(I, prop6)
-        list_criticals.append(crit)
-        # Migration I
-        prop7=d * I
-        list_Propensities.append(prop7)
-        crit = IsCritical(I, prop7)
-        list_criticals.append(crit)
-
-    propensities = np.array(list_Propensities) # On transvase dans un array parce que c'est mieux
-    Sum_propensities = np.sum(propensities)
-    Criticals = np.array(list_criticals)
-
-    return propensities, Sum_propensities, Criticals
 
 #Propensities, SumProp, Criticals = ComputePropensitiesAndCriticals(Metapop)
 
@@ -168,6 +104,9 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     MatrixPropensitiesS = np.zeros((Nrow, Ncol))
     MatrixPropensitiesI = np.zeros((Nrow, Ncol))
 
+    # POur récupérer les ordres de réactions (utile après)
+    Orders = []
+
     #print('Nombre de sites', NbPops)
     #print('Nombre entités', NbSpecies)
     #print('taille de matrice', StateChangeMatrixI.size)
@@ -191,6 +130,9 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
 
         ##### On décline tous les évènements possibles pour remplir les changements d'états associés + propensity
         #Reproduction S
+        order = 1
+        Orders.append(order)
+
         prop = r* S
         propensities_S[specie] = prop
         MatrixPropensitiesS[Index] = propensities_S
@@ -200,7 +142,10 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         StateChangeMatrixS[Index] = StatechangeVector_S
 
         Index += 1
+
         #Mort S
+        order = 3
+        Orders.append(order)
         prop = r * S * (S+I) /k
         propensities_S[specie] = prop
         MatrixPropensitiesS[Index] = propensities_S
@@ -210,7 +155,11 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         StateChangeMatrixS[Index] = StatechangeVector_S
 
         Index += 1
+
         #Migration S
+        order = 1
+        Orders.append(order)
+
         prop = d * S
         propensities_S[specie] = prop
         MatrixPropensitiesS[Index] = propensities_S
@@ -220,6 +169,8 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         StateChangeMatrixS[Index] = StatechangeVector_S
         Index += 1
         #Migration I
+        order = 1
+        Orders.append(order)
 
         prop = d * I
         propensities_I[specie] = prop
@@ -231,6 +182,8 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
 
         Index += 1
         # Mort I
+        order = 1
+        Orders.append(order)
         prop = alpha * I
         propensities_I[specie] = prop
         MatrixPropensitiesI[Index] = propensities_I
@@ -241,6 +194,8 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
 
         Index += 1
         #Guérison I
+        order = 1
+        Orders.append(order)
 
         prop = alpha * I
         propensities_I[specie] = prop
@@ -256,6 +211,8 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
 
         Index += 1
         #Infection
+        order = 2
+        Orders.append(order)
 
         prop = beta * S * I
         propensities_S[specie] = prop
@@ -272,11 +229,12 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
 
     StateChangeMatrix = np.concatenate((StateChangeMatrixS, StateChangeMatrixI), axis = 1)
     MatrixPropensities = np.concatenate((MatrixPropensitiesS, MatrixPropensitiesI), axis = 1)
+    Reaction_orders = np.array(Orders)
+    return StateChangeMatrix, MatrixPropensities, Orders
 
-    return StateChangeMatrix, MatrixPropensities
-
-StateMatrix, Props = GetMainMatrix(Metapop)
-
+StateMatrix, Props, Orders = GetMainMatrix(Metapop)
+print('Les ordres de réaction', Orders)
+print('Nombre ordres', len(Orders))
 
 def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée respectivement : Vecteur, Matrice, matrice
     ncrit = 11
@@ -292,25 +250,39 @@ def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée res
             else : pass
     return Critical_Matrix # Renvoie une matrice de booléens
 
-def ComputeMuSigma(propensities, statechange, criticals):
+def ComputeMuSigma(propensities, statechange, criticals, reaction_orders): # Matrice, matrice matrice vecteur
     #Renvoie les vecteurs mu et sigma pour chaque pop et réaction critique
-    Crtical_pos = np.where(criticals==1) # Pour éviter de faire encore une boucle parce que ça rame sec
-    Crit_row = Crtical_pos[0]
-    print('HOLA MUCHACHO', type(Crit_row[0]))
-    Crit_col = Crtical_pos[1]
-    mu_i = []
-    sigma_i = []
-    for i in range(len(Crit_row)): # Pour chaque critique
-        mu_i.append(abs(propensities[Crit_row[i],Crit_col[i]] * statechange[Crit_row[i],Crit_col[i]])) # Calcul des |mus|
-        sigma_i.append(propensities[Crit_row[i],Crit_col[i]] * statechange[Crit_row[i],Crit_col[i]]**2) # Calcul des sigma
-    mus = np.array(mu_i)
-    sigmas = np.array(sigma_i)
-    return mus, sigmas
+    Ncrit_Order = []
+    NCrtical_pos = np.where(criticals==1) # Pour éviter de faire encore une boucle parce que ça va ramer sec
+    NCrit_row = np.unique(NCrtical_pos[0]) # On garde l'identifiant des lignes qui correspondent à des réactions critiques
+
+    # On calcule les Mu et Sigmas
+    mu_vect = np.sum(abs(propensities*statechange), axis=0)
+    print('Bonjour',mu_vect)
+    print('Monsieur',len(mu_vect))
+    sigma_vect = np.sum(propensities * statechange**2, axis=0)
+
+    # Et On ne garde que ceux qui correspondent à des réactions non-critiques
+    mus = np.delete(mu_vect, NCrit_row, axis=0)
+    sigmas = np.delete(sigma_vect, NCrit_row, axis=0)
+
+    #Idem pour les index des ordres de réactions
+    non_crit_orders = np.delete(reaction_orders, NCrit_row,axis=0)
+
+    return mus, sigmas, non_crit_orders
+
+def GetEpsiloni() :
+    epsilon = 0.03 # Valeur donnée dans l'article
+    # Definir la sélection des gi en fonction des ordres de réaction
+    # Besoin de faire un lien avec les réactions
+
+    return 0
 les_xi = Get_xi(Metapop)
 Criticals = GetCriticals(les_xi, Props, StateMatrix)
-mus, sigmas = ComputeMuSigma(Props, StateMatrix, Criticals)
+mus, sigmas, NC_orders = ComputeMuSigma(Props, StateMatrix, Criticals, Orders)
 print('Les Mu', mus)
-print('Les sigmas', sigmas)
+print('Les sigmas', len(sigmas))
+
 
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
