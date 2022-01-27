@@ -55,10 +55,12 @@ def IsCritical(xi,propensity) : # Détermine si une réaction est critique (renv
     else : pass
     return iscritical
 def Get_xi(Metapop) : # Get density values of each subpoppulation of each site
-    list_xi = []
+    list_si = []
+    list_ii = []
     for pop in Metapop :
-        list_xi.append(pop[0])
-        list_xi.append(pop[1])
+        list_si.append(pop[0])
+        list_ii.append(pop[1])
+    list_xi = list_si+list_ii
     xi = np.array(list_xi)
     return xi
 
@@ -160,9 +162,9 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     NbSpecies = len(Metapop) * len(Metapop[0])
 
     Nrow = Nbevents*NbPops
-    Ncol = NbSpecies
+    Ncol = NbPops
 
-    StateChangeMatrixS = np.zeros((Nrow, Ncol))
+    StateChangeMatrixS = np.zeros((Nrow, Ncol)) # Taille 70*10
     StateChangeMatrixI = np.zeros((Nrow, Ncol))
     MatrixPropensitiesS = np.zeros((Nrow, Ncol))
     MatrixPropensitiesI = np.zeros((Nrow, Ncol))
@@ -172,11 +174,11 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     print('taille de matrice', StateChangeMatrixI.size)
     print('Taille de boucle', range(len(Sarray)) )
     for specie in range(len(Sarray)) :
-        propensities_I = np.zeros(NbSpecies)
-        StatechangeVector_I = np.zeros(NbSpecies)
+        propensities_I = np.zeros(NbPops)
+        StatechangeVector_I = np.zeros(NbPops)
 
-        propensities_S = np.zeros(NbSpecies)
-        StatechangeVector_S = np.zeros(NbSpecies)
+        propensities_S = np.zeros(NbPops)
+        StatechangeVector_S = np.zeros(NbPops)
 
         # On rempli deux array de taille Nbspecie
         #L'un contient les propensity de chaque évènement
@@ -278,11 +280,28 @@ StateMatrix, Props = GetMainMatrix(Metapop)
 print('Taille matrice', StateMatrix.size)
 print('Matrice de changement detat ', StateMatrix)
 
+def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée respectivement : Vecteur, Matrice, matrice
+    ncrit = 11
+    list_Indexcriticals = []
+    dim_matrix = propensities.shape
+    Critical_Matrix = np.zeros(dim_matrix)
+    for index, effectif in enumerate(effectifs):
+        if effectif < ncrit : list_Indexcriticals.append(index)
+    print('BONJOUR',list_Indexcriticals) # OK
 
+    for i in list_Indexcriticals : # Pour chaque pop critique
+        print('VOICI LE I',i)
+        for j in range(len(propensities)): # On regarde si aj > 0 ET vij < 0
+            if propensities[j,i] > 0 and statechange[j,i] <0 : Critical_Matrix[j,i] =1
+            else : pass
+    print('REBONJOUR', Critical_Matrix)
+    return Critical_Matrix
+les_xi = Get_xi(Metapop)
+Criticals = GetCriticals(les_xi, Props, StateMatrix)
 print('Matrice de proba ', Props)
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
 print(path)
-Data = pd.DataFrame(data= Props)
+Data = pd.DataFrame(data= Criticals)
 print(Data)
-Data.to_csv('Matrice_propensities.csv')
+Data.to_csv('Critics.csv')
