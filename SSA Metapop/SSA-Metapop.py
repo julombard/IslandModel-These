@@ -295,7 +295,14 @@ def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée res
             if propensities[j,i] > 0 and statechange[j,i] <0 : Critical_Matrix[j,i] =1
             else : pass
     print('REBONJOUR', Critical_Matrix)
-    return Critical_Matrix
+    return Critical_Matrix # Renvoie une matrice de booléens
+
+def ComputeMuSigma(propesities, statechange, criticals):
+    #Renvoie les vecteurs mu et sigma pour chaque pop et réaction critique
+
+
+
+    return 0
 les_xi = Get_xi(Metapop)
 Criticals = GetCriticals(les_xi, Props, StateMatrix)
 print('Matrice de proba ', Props)
