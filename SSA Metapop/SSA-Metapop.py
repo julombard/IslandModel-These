@@ -275,19 +275,32 @@ def ComputeMuSigma(propensities, statechange, criticals, reaction_orders): # Mat
 
     return Vect_mu, Vect_Sigma, Ncrit_Orders
 
-def GetEpsiloni() :
+def GetEpsiloni(xi, Ordres) : # Vecteur des ordre des réactions non-critiques
     epsilon = 0.03 # Valeur donnée dans l'article
+    print()
+    g_vector = []
     # Definir la sélection des gi en fonction des ordres de réaction
-    # Besoin de faire un lien avec les réactions
+    for index , i in enumerate(Ordres) :
+        if i == 1 :
+            g= 1
+            g_vector.append(g)
+        elif i == 2 :
+            g = 2
+            g_vector.append(g)
+        elif i == 3 :
+            x = xi[index]
+            g = 3/2 * ( 2 + 1 / (x-1))
+            g_vector.append(g)
 
-    return 0
+    return g_vector
 les_xi = Get_xi(Metapop)
 Criticals = GetCriticals(les_xi, Props, StateMatrix)
 print('Voici le vecteur des critiques', Criticals)
 mus, sigmas, NC_orders = ComputeMuSigma(Props, StateMatrix, Criticals, Orders)
-print('Les Mu', mus)
-print('Les sigmas', len(sigmas))
-print('Les Nc ordres',len(NC_orders))
+g_vect = GetEpsiloni(les_xi, NC_orders)
+
+print('LES ORDRES',NC_orders)
+print('VECTEUR G', g_vect)
 
 
 # On vérifie que la matrice à bien la tronche espérée
