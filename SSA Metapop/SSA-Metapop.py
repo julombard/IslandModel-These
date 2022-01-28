@@ -56,29 +56,6 @@ def Get_xi(Metapop) : # Get density values of each subpoppulation of each site
     xi = np.array(list_xi)
     return xi
 
-#Propensities, SumProp, Criticals = ComputePropensitiesAndCriticals(Metapop)
-
-
-def GetTauPrime(xi, propensity, criticals):
-    # Traduction de l'équation mathématique en français
-    # Pour chaque évènement NON critique
-    # On calcule pour chaque espèce la dérivée de la fonction de propensity par rapport a l'espèce, qu'on multiplie
-    # par le vecteur de changement d'état
-
-
-    #Le résultat est remultiplié par la propensity pour avoir mu
-
-
-    #Le carré du résultats est multiplié par la propensity pour avoir sigma
-
-
-    # Le choix du tau est le minimum entre deux trucs, l'un fait à partir de mu, l'autre de sigma
-
-
-    return 0
-
-
-
 def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensities et celle qui contient les vecteurs de changement d'états
 
     #Séparation des S et I par convenance
@@ -94,7 +71,7 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     #Specifier la taille des matrices de sortie à l'avance
     Nbevents = 7
     NbPops = len(Sarray)
-    NbSpecies = len(Metapop) * len(Metapop[0])
+    #NbSpecies = len(Metapop) * len(Metapop[0])
 
     Nrow = Nbevents*NbPops
     Ncol = NbPops
@@ -275,33 +252,60 @@ def ComputeMuSigma(propensities, statechange, criticals, reaction_orders): # Mat
 
     return Vect_mu, Vect_Sigma, Ncrit_Orders
 
-def GetEpsiloni(xi, Ordres) : # Vecteur des ordre des réactions non-critiques
+def GetEpsiloni(xi) : # Vecteur des ordre des réactions non-critiques
     epsilon = 0.03 # Valeur donnée dans l'article
-    print()
+    Nbtypes = int(len(xi)/2) # Bouuuuh c'est laid ça
     g_vector = []
+
+    # Pour les i le HOR (higghest order reaction) est toujours 2 -> beta *s *i
+    # Pour les s le HOR est touours 3 (mortalité densité dpdt)
     # Definir la sélection des gi en fonction des ordres de réaction
-    for index , i in enumerate(Ordres) :
-        if i == 1 :
-            g= 1
+    # Les xi sont ordonnés de S1 à Sn et de I1 à In
+    # Donc HOR = 3 pour x1 à xn et =2 pour xn+1 à xm où m est le nombre total d'entités
+
+    for index, specie in enumerate(xi) :
+        if index < Nbtypes : # Si on parcours les S
+            x = specie
+            g = 3/2 * (1/(x-1))
             g_vector.append(g)
-        elif i == 2 :
+        elif index >= Nbtypes : # Si on parcours les I
             g = 2
             g_vector.append(g)
-        elif i == 3 :
-            x = xi[index]
-            g = 3/2 * ( 2 + 1 / (x-1))
-            g_vector.append(g)
 
-    return g_vector
+    epsilon_i =[i / epsilon for i in g_vector]
+    return epsilon_i
+
+def GetTauPrime(xi, mu, sigma, epsilon): # Que des vecteurs
+    # Prendre tous les max entre epsilon*xi et 1
+    Vect_xiepsi = xi * epsilon
+    print('COUCUUUUUU', Vect_xiepsi[0])
+    Upper_term = []
+    Tau_candidates = []
+
+    for i in Vect_xiepsi :
+        Upper_term.append(max(i, 1))
+    # Prendre tous les min entre les deux tau candidats pour chaque espèce
+    for i in range(len(xi)) :
+        Candidate_mu= Upper_term[i]/ mu[i]
+        Candidate_sigma=Upper_term[i]**2/ sigma[i]
+        Tau_candidates.append(min([Candidate_mu, Candidate_sigma]))
+    # Prendre le min entre tous les candidats qui ont passé les qualifs
+    TauPrime = min(Tau_candidates)
+    return TauPrime
+
 les_xi = Get_xi(Metapop)
 Criticals = GetCriticals(les_xi, Props, StateMatrix)
-print('Voici le vecteur des critiques', Criticals)
 mus, sigmas, NC_orders = ComputeMuSigma(Props, StateMatrix, Criticals, Orders)
-g_vect = GetEpsiloni(les_xi, NC_orders)
+g_vect = GetEpsiloni(les_xi)
+TauPrime = GetTauPrime(les_xi, mus, sigmas, g_vect)
 
-print('LES ORDRES',NC_orders)
-print('VECTEUR G', g_vect)
+#### Regarder si Tau < 10* a0(x) ou a0(x) et la somme de toutes les propensities ####
 
+#### Si non, on fait gillespie de base sur 100 itérations ###
+
+#### Si oui on va chercher TauPrimePrime #####
+
+#### On compare TauPrime avec TauPrimePrime et on avise ####
 
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
