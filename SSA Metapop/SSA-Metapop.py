@@ -213,8 +213,8 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     return StateChangeMatrix, MatrixPropensities, Reaction_orders, aj
 
 StateMatrix, Props, Orders, aj = GetMainMatrix(Metapop)
-print('Les ordres de réaction', Orders)
-print('Nombre ordres', len(Orders))
+print('lézaji', aj)
+
 
 
 def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée respectivement : Vecteur, Matrice, matrice
@@ -306,52 +306,60 @@ les_xi = Get_xi(Metapop)
 Criticals = GetCriticals(les_xi, Props, StateMatrix)
 mus, sigmas, NC_orders, a0nc = ComputeMuSigma(Props, StateMatrix, Criticals, Orders)
 
-print('SOMME NC PROP', a0nc)
 g_vect = GetEpsiloni(les_xi)
 TauPrime = GetTauPrime(les_xi, mus, sigmas, g_vect)
 
 # Regarder si Tau < 10* a0(x) ou a0(x) et la somme de toutes les propensities ####
 a0x = a0 = np.sum(aj)
+a0_crit = a0x-a0nc
+
 TauCrit = 1/ a0x
+print('TAU CRITIQUE', TauCrit)
+print('TAU PRIME', TauPrime)
 if TauPrime < TauCrit :
     print('Too bad, you are very mal tombé dans une partie non implemented') # Insérer direct Method Ici
-else : TauPrimePrime = np.random.exponential(1/a0nc, 1)
-
-# Chercher les réctions critiques
-Crit_index = np.where(Criticals == 1)  # Pour trouver les index des réactions critiques
-Critlist = list(Crit_index[0])  # Pour les traquer et dans une liste les lier
-
-if TauPrime < TauPrimePrime :
-    Tau = TauPrime
-    # On génère les kj  d'une loi de poisson pour toutes les réactions NC, si Critique -> kj =0
-    kjs = []
-    for i in  range(len(les_xi)):
-        if i in Critlist :
-            kjs.append(0)
-        else :
-            mean = aj[i] * Tau
-            kjs.append(np.random.poisson(mean, 1))
-    print('Les KJS 1', kjs)
 else :
-    Tau = TauPrimePrime
-    kjs = []
-    # Identifier la prochaine réaction critique
-    jc = []
-    for i in range(len(les_xi)):
-        if i in Critlist :
-            kjs.append(0) # On set à 0 par défaut
-            jc.append(aj[i]/a0nc) # On cal
-        else :
-            mean = aj[i] * Tau
-            kjs.append(np.random.poisson(mean, 1))
-    # On définit l'évènement critique qui peut se déclencher une fois
-    #On crée le vecteur des probas cumulées
-    print('Les probas extremes', jc)
-    Index_event = np.random.choice(Critlist, 1, p=jc)
-    print('EVENEMENT XTREM est le numéroooooo :',Index_event)
-    kjs[Index_event]=1
-    print('Les KJS 2', kjs)
+    TauPrimePrime = np.random.exponential(1/a0nc, 1)
 
+    # Chercher les réctions critiques
+    Crit_index = np.where(Criticals == 1)  # Pour trouver les index des réactions critiques
+    Critlist = list(Crit_index[0])  # Pour les traquer et dans une liste les lier
+
+    if TauPrime < TauPrimePrime :
+        Tau = TauPrime
+        # On génère les kj  d'une loi de poisson pour toutes les réactions NC, si Critique -> kj =0
+        kjs = []
+        for i in  range(len(les_xi)):
+            if i in Critlist :
+                kjs.append(0)
+            else :
+                mean = aj[i] * Tau
+                kj = np.random.poisson(mean, 1)
+                kjs.append(kj[0])
+        print('Les KJS 1', kjs)
+    else :
+        Tau = TauPrimePrime
+        kjs = []
+        # Identifier la prochaine réaction critique
+        jc = []
+        for i in range(len(les_xi)):
+            print('me voilalaaalaalalal',aj[i])
+            if i in Critlist :
+                kjs.append(0) # On set à 0 par défaut
+                jc.append(aj[i]/a0_crit) # On cal
+            else :
+                mean = aj[i] * Tau
+                print('LA MOYENNE', mean)
+                kj=np.random.poisson(mean, 1)
+                kjs.append(kj[0])
+        # On définit l'évènement critique qui peut se déclencher une fois
+        #On crée le vecteur des probas cumulées
+        print('Les probas extremes', jc)
+        Index_event = np.random.choice(Critlist, 1, p=jc)
+        print('EVENEMENT XTREM est le numéroooooo :',Index_event)
+        kjs[Index_event[0]]=1
+        print('Les KJS 2', kjs)
+print('TAU', Tau)
 
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
