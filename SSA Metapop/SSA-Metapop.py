@@ -18,7 +18,7 @@ stochpy.SSA
 # La sélection de tau est basée de "Efficient step size selection for tau leaping simulation", cao et al (2006)
 
 
-#Définition des paramètres du modèle
+# Définition des paramètres du modèle
 # InitPar
 beta = 0.005  # Infectious contact rate
 r = 1.5  # Per capita growth rate
@@ -30,7 +30,7 @@ rho = 0.1 # Dispersal Cost
 
 
 
-######## Step 1 : Fabriquer une métapop pour un état initial donné
+# Step 1 : Fabriquer une métapop pour un état initial donné
 def Set_metapop(taillepop, nbsites): #Initialise une métapopulation de nbsites sites contenant chacun taillepop individus, un site aléatoire contiendra une individu infecté
     Metapop=[]
 
@@ -41,7 +41,7 @@ def Set_metapop(taillepop, nbsites): #Initialise une métapopulation de nbsites 
     return Metapoparray
 
 Metapop = Set_metapop(100, 10) # Définir une métapop en moins de temps qu'il n'en faut pour définir la fonction !
-#print('La métapop', Metapop)
+# print('La métapop', Metapop)
 
 def Tauleap4Metapop() : # Will be used someday, or maybe not
     return 0
@@ -58,7 +58,7 @@ def Get_xi(Metapop) : # Get density values of each subpoppulation of each site
 
 def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensities et celle qui contient les vecteurs de changement d'états
 
-    #Séparation des S et I par convenance
+    # Séparation des S et I par convenance
     Slist = []
     Ilist = []
 
@@ -68,10 +68,10 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     Sarray = np.array(Slist)
     Iarray= np.array(Ilist)
 
-    #Specifier la taille des matrices de sortie à l'avance
+    # Specifier la taille des matrices de sortie à l'avance
     Nbevents = 7
     NbPops = len(Sarray)
-    #NbSpecies = len(Metapop) * len(Metapop[0])
+    # NbSpecies = len(Metapop) * len(Metapop[0])
 
     Nrow = Nbevents*NbPops
     Ncol = NbPops
@@ -84,10 +84,10 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     # POur récupérer les ordres de réactions (utile après)
     Orders = []
 
-    #print('Nombre de sites', NbPops)
-    #print('Nombre entités', NbSpecies)
-    #print('taille de matrice', StateChangeMatrixI.size)
-    #print('Taille de boucle', range(len(Sarray)) )
+    # print('Nombre de sites', NbPops)
+    # print('Nombre entités', NbSpecies)
+    # print('taille de matrice', StateChangeMatrixI.size)
+    # print('Taille de boucle', range(len(Sarray)) )
     for specie in range(len(Sarray)) :
         propensities_I = np.zeros(NbPops)
         StatechangeVector_I = np.zeros(NbPops)
@@ -96,8 +96,8 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         StatechangeVector_S = np.zeros(NbPops)
 
         # On rempli deux array de taille Nbspecie
-        #L'un contient les propensity de chaque évènement
-        #L'autre contient les changements d'états
+        # L'un contient les propensity de chaque évènement
+        # L'autre contient les changements d'états
 
         S = Sarray[specie]
         I = Iarray[specie]
@@ -105,8 +105,8 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         # Pour que les bons index soient remplis
         Index = Nbevents * specie # Va de Nbevent en Nbevent en partant de zéro
 
-        ##### On décline tous les évènements possibles pour remplir les changements d'états associés + propensity
-        #Reproduction S
+        # On décline tous les évènements possibles pour remplir les changements d'états associés + propensity
+        # Reproduction S
         order = 1
         Orders.append(order)
 
@@ -120,7 +120,7 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
 
         Index += 1
 
-        #Mort S
+        # Mort S
         order = 3
         Orders.append(order)
         prop = r * S * (S+I) /k
@@ -133,7 +133,7 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
 
         Index += 1
 
-        #Migration S
+        # Migration S
         order = 1
         Orders.append(order)
 
@@ -145,7 +145,7 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         StatechangeVector_S[specie] = changestate
         StateChangeMatrixS[Index] = StatechangeVector_S
         Index += 1
-        #Migration I
+        # Migration I
         order = 1
         Orders.append(order)
 
@@ -170,7 +170,7 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         StateChangeMatrixI[Index]= StatechangeVector_I
 
         Index += 1
-        #Guérison I
+        # Guérison I
         order = 1
         Orders.append(order)
 
@@ -187,7 +187,7 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
         StateChangeMatrixS[Index] = StatechangeVector_S
 
         Index += 1
-        #Infection
+        # Infection
         order = 2
         Orders.append(order)
 
@@ -207,11 +207,15 @@ def GetMainMatrix(Metapop) : # Fonction qui récupère la matrice des propensiti
     StateChangeMatrix = np.concatenate((StateChangeMatrixS, StateChangeMatrixI), axis = 1)
     MatrixPropensities = np.concatenate((MatrixPropensitiesS, MatrixPropensitiesI), axis = 1)
     Reaction_orders = np.array(Orders)
-    return StateChangeMatrix, MatrixPropensities, Orders
 
-StateMatrix, Props, Orders = GetMainMatrix(Metapop)
+    # Calcul de la somme des propensities
+    aj = np.sum(MatrixPropensities, axis=1)
+    return StateChangeMatrix, MatrixPropensities, Reaction_orders, aj
+
+StateMatrix, Props, Orders, aj = GetMainMatrix(Metapop)
 print('Les ordres de réaction', Orders)
 print('Nombre ordres', len(Orders))
+
 
 def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée respectivement : Vecteur, Matrice, matrice
     ncrit = 11
@@ -250,7 +254,12 @@ def ComputeMuSigma(propensities, statechange, criticals, reaction_orders): # Mat
     # On récupère les ordres des réactions non critiques, car c'est utile juste après
     Ncrit_Orders = np.delete(reaction_orders, Crit_list)
 
-    return Vect_mu, Vect_Sigma, Ncrit_Orders
+    # On récupère la somme des propensities NON critiques
+    NC_propensities = np.delete(propensities, Crit_list, axis=0)
+    aj_nc = np.sum(NC_propensities, axis=1)
+    a0_nc = np.sum(aj_nc)
+
+    return Vect_mu, Vect_Sigma, Ncrit_Orders, a0_nc
 
 def GetEpsiloni(xi) : # Vecteur des ordre des réactions non-critiques
     epsilon = 0.03 # Valeur donnée dans l'article
@@ -295,17 +304,44 @@ def GetTauPrime(xi, mu, sigma, epsilon): # Que des vecteurs
 
 les_xi = Get_xi(Metapop)
 Criticals = GetCriticals(les_xi, Props, StateMatrix)
-mus, sigmas, NC_orders = ComputeMuSigma(Props, StateMatrix, Criticals, Orders)
+mus, sigmas, NC_orders, a0nc = ComputeMuSigma(Props, StateMatrix, Criticals, Orders)
+
+print('SOMME NC PROP', a0nc)
 g_vect = GetEpsiloni(les_xi)
 TauPrime = GetTauPrime(les_xi, mus, sigmas, g_vect)
 
-#### Regarder si Tau < 10* a0(x) ou a0(x) et la somme de toutes les propensities ####
+# Regarder si Tau < 10* a0(x) ou a0(x) et la somme de toutes les propensities ####
+a0x = a0 = np.sum(aj)
+TauCrit = 1/ a0x
+if TauPrime < TauCrit :
+    pass # Insérer direct Method Ici
+else : TauPrimePrime = np.random.exponential(1/a0nc, 1)
 
-#### Si non, on fait gillespie de base sur 100 itérations ###
+if TauPrime < TauPrimePrime :
+    Tau = TauPrime
+    # On génère les kj  d'une loi de poisson pour toutes les réactions NC, si Critique -> kj =0
+    kjs = []
+    # Chercher les réctions critiques
+    Crit_index = np.where(Criticals == 1)  # Pour trouver les index des réactions critiques
+    Critlist = list(Crit_index[0])  # Pour les traquer et dans une liste les lier
+    for i in  range(len(les_xi)):
+        if i in Critlist :
+            kjs.append(0)
+        else :
+            mean = aj[i] * Tau
+            kjs.append(np.random.poisson(mean, 1))
+    print('Les KJS 1', kjs)
+else :
+    Tau = TauPrimePrime
 
-#### Si oui on va chercher TauPrimePrime #####
+    # On défini la seule réaction critique autorisée à se produire
+    jc = []
 
-#### On compare TauPrime avec TauPrimePrime et on avise ####
+# Si non, on fait gillespie de base sur 100 itérations ###
+
+# Si oui on va chercher TauPrimePrime #####
+
+# On compare TauPrime avec TauPrimePrime et on avise ####
 
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
