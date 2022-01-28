@@ -41,7 +41,7 @@ def Set_metapop(taillepop, nbsites): #Initialise une métapopulation de nbsites 
     return Metapoparray
 
 Metapop = Set_metapop(100, 10) # Définir une métapop en moins de temps qu'il n'en faut pour définir la fonction !
-print('La métapop', Metapop)
+#print('La métapop', Metapop)
 
 def Tauleap4Metapop() : # Will be used someday, or maybe not
     return 0
@@ -248,28 +248,32 @@ def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée res
         for j in range(len(propensities)): # On regarde si aj > 0 ET vij < 0
             if propensities[j,i] > 0 and statechange[j,i] <0 : Critical_Matrix[j,i] =1
             else : pass
-    return Critical_Matrix # Renvoie une matrice de booléens
+    vect_crit = np.sum(Critical_Matrix, axis= 1) # Axe 1 pour sommer sur les lignes !!!! Ne te gourres plus, ca va bien maintenant !
+    return vect_crit # Renvoie un vecteur de booléens
 
 def ComputeMuSigma(propensities, statechange, criticals, reaction_orders): # Matrice, matrice matrice vecteur
-    #Renvoie les vecteurs mu et sigma pour chaque pop et réaction critique
-    Ncrit_Order = []
-    NCrtical_pos = np.where(criticals==1) # Pour éviter de faire encore une boucle parce que ça va ramer sec
-    NCrit_row = np.unique(NCrtical_pos[0]) # On garde l'identifiant des lignes qui correspondent à des réactions critiques
 
-    # On calcule les Mu et Sigmas
-    mu_vect = np.sum(abs(propensities*statechange), axis=1)
-    print('Bonjour',mu_vect)
-    print('Monsieur',len(mu_vect))
-    sigma_vect = np.sum(propensities * statechange**2, axis=1)
+    ### Chercher les réctions critiques
+    Crit_indexes = np.where(criticals==1) # Pour trouver les index des réactions critiques
+    Crit_list = list(Crit_indexes[0]) # Pour les traquer et dans une liste les lier
+    print('LA LISTE', Crit_list) # Bon ca fonctionne
 
-    # Et On ne garde que ceux qui correspondent à des réactions non-critiques
-    mus = np.delete(mu_vect, NCrit_row, axis=1)
-    sigmas = np.delete(sigma_vect, NCrit_row, axis=1)
+    # On calcule la matrice produit des aj(x) * vij (et on triera ce qu'on garde après)
+    Matrice_produit_mu = abs(statechange * propensities)
+    Matrice_produit_sigma = statechange**2 * propensities
 
-    #Idem pour les index des ordres de réactions
-    non_crit_orders = np.delete(reaction_orders, NCrit_row,axis=1)
+    # On retire de ces matrices les lignes correspondant à des réactions critiques
+    Mat_mu = np.delete(Matrice_produit_mu, Crit_list, axis = 0)
+    Mat_sigma = np.delete(Matrice_produit_sigma, Crit_list, axis = 0) # EN passant une liste en 2e argument, on s'évite une boucle
 
-    return mus, sigmas, non_crit_orders
+    # On fait la somme des colonnes des matrices pour récupérer les vecteurs des mus et sigmas
+    Vect_mu = np.sum(Mat_mu, axis = 0)
+    Vect_Sigma = np.sum(Mat_sigma, axis = 0)
+
+    # On récupère les ordres des réactions non critiques, car c'est utile juste après
+    Ncrit_Orders = np.delete(reaction_orders, Crit_list)
+
+    return Vect_mu, Vect_Sigma, Ncrit_Orders
 
 def GetEpsiloni() :
     epsilon = 0.03 # Valeur donnée dans l'article
@@ -279,9 +283,11 @@ def GetEpsiloni() :
     return 0
 les_xi = Get_xi(Metapop)
 Criticals = GetCriticals(les_xi, Props, StateMatrix)
+print('Voici le vecteur des critiques', Criticals)
 mus, sigmas, NC_orders = ComputeMuSigma(Props, StateMatrix, Criticals, Orders)
 print('Les Mu', mus)
 print('Les sigmas', len(sigmas))
+print('Les Nc ordres',len(NC_orders))
 
 
 # On vérifie que la matrice à bien la tronche espérée
