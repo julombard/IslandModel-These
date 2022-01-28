@@ -314,16 +314,17 @@ TauPrime = GetTauPrime(les_xi, mus, sigmas, g_vect)
 a0x = a0 = np.sum(aj)
 TauCrit = 1/ a0x
 if TauPrime < TauCrit :
-    pass # Insérer direct Method Ici
+    print('Too bad, you are very mal tombé dans une partie non implemented') # Insérer direct Method Ici
 else : TauPrimePrime = np.random.exponential(1/a0nc, 1)
+
+# Chercher les réctions critiques
+Crit_index = np.where(Criticals == 1)  # Pour trouver les index des réactions critiques
+Critlist = list(Crit_index[0])  # Pour les traquer et dans une liste les lier
 
 if TauPrime < TauPrimePrime :
     Tau = TauPrime
     # On génère les kj  d'une loi de poisson pour toutes les réactions NC, si Critique -> kj =0
     kjs = []
-    # Chercher les réctions critiques
-    Crit_index = np.where(Criticals == 1)  # Pour trouver les index des réactions critiques
-    Critlist = list(Crit_index[0])  # Pour les traquer et dans une liste les lier
     for i in  range(len(les_xi)):
         if i in Critlist :
             kjs.append(0)
@@ -333,15 +334,24 @@ if TauPrime < TauPrimePrime :
     print('Les KJS 1', kjs)
 else :
     Tau = TauPrimePrime
-
-    # On défini la seule réaction critique autorisée à se produire
+    kjs = []
+    # Identifier la prochaine réaction critique
     jc = []
+    for i in range(len(les_xi)):
+        if i in Critlist :
+            kjs.append(0) # On set à 0 par défaut
+            jc.append(aj[i]/a0nc) # On cal
+        else :
+            mean = aj[i] * Tau
+            kjs.append(np.random.poisson(mean, 1))
+    # On définit l'évènement critique qui peut se déclencher une fois
+    #On crée le vecteur des probas cumulées
+    print('Les probas extremes', jc)
+    Index_event = np.random.choice(Critlist, 1, p=jc)
+    print('EVENEMENT XTREM est le numéroooooo :',Index_event)
+    kjs[Index_event]=1
+    print('Les KJS 2', kjs)
 
-# Si non, on fait gillespie de base sur 100 itérations ###
-
-# Si oui on va chercher TauPrimePrime #####
-
-# On compare TauPrime avec TauPrimePrime et on avise ####
 
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
