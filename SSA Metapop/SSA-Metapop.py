@@ -257,17 +257,17 @@ def ComputeMuSigma(propensities, statechange, criticals, reaction_orders): # Mat
     NCrit_row = np.unique(NCrtical_pos[0]) # On garde l'identifiant des lignes qui correspondent à des réactions critiques
 
     # On calcule les Mu et Sigmas
-    mu_vect = np.sum(abs(propensities*statechange), axis=0)
+    mu_vect = np.sum(abs(propensities*statechange), axis=1)
     print('Bonjour',mu_vect)
     print('Monsieur',len(mu_vect))
-    sigma_vect = np.sum(propensities * statechange**2, axis=0)
+    sigma_vect = np.sum(propensities * statechange**2, axis=1)
 
     # Et On ne garde que ceux qui correspondent à des réactions non-critiques
-    mus = np.delete(mu_vect, NCrit_row, axis=0)
-    sigmas = np.delete(sigma_vect, NCrit_row, axis=0)
+    mus = np.delete(mu_vect, NCrit_row, axis=1)
+    sigmas = np.delete(sigma_vect, NCrit_row, axis=1)
 
     #Idem pour les index des ordres de réactions
-    non_crit_orders = np.delete(reaction_orders, NCrit_row,axis=0)
+    non_crit_orders = np.delete(reaction_orders, NCrit_row,axis=1)
 
     return mus, sigmas, non_crit_orders
 
