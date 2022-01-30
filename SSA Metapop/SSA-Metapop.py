@@ -1,10 +1,10 @@
 # Algorithme de simulation stochastique pour les métapopulations
 import os
-import numpy
 import numpy as np
 import pandas as pd
 import stochpy
 from copy import deepcopy
+from itertools import islice
 
 stochpy.SSA
 # Implémentation du modèle
@@ -314,8 +314,8 @@ a0x = a0 = np.sum(aj)
 a0_crit = a0x-a0nc
 
 TauCrit = 1/ a0x
-print('TAU CRITIQUE', TauCrit)
-print('TAU PRIME', TauPrime)
+#print('TAU CRITIQUE', TauCrit)
+#print('TAU PRIME', TauPrime)
 if TauPrime < TauCrit:
     print('Too bad, you are very mal tombé dans une partie non implemented') # Insérer direct Method Ici
 else :
@@ -353,33 +353,42 @@ else :
                 kjs.append(kj[0])
         # On définit l'évènement critique qui peut se déclencher une fois
         #On crée le vecteur des probas cumulées
-        print('Les probas extremes', jc)
+        #print('Les probas extremes', jc)
         Index_event = np.random.choice(Critlist, 1, p=jc)
         print('EVENEMENT XTREM est le numéroooooo :',Index_event)
-        kjs[Index_event[0]]=1
+        kjs[Index_event[0]]= 1
         print('Les KJS 2', kjs)
-    print('Taille des Kj, normalement 70', len(kjs))
-print('TAU', Tau)
+    #print('Taille des Kj, normalement 70', len(kjs))
+#print('TAU', Tau)
 
 #On a le vecteur du nombre d'occurence des évents, maintenant faut les répercuter sur la métapop
 def UpdateMetapop(Xi, kj, StateMatrix): # Vecteur , vecteur, Matrice
     TotalState = deepcopy(StateMatrix)
     Xiplusun = deepcopy(Xi)
-    print('ligne 1 matrice ?', TotalState[1,:])
+    #print('ligne 1 matrice ?', TotalState[1,:])
     for index, i in enumerate(kj) : # Crée un matrice d'états avec les changements liés à l'ensemble des évènement survenus
-        print('voici i', i)
         TotalState[index,:] = np.multiply(TotalState[index,:], i)
     TotalVector = np.sum(TotalState, axis=0)
-    print('Vecteur de changements totaux', TotalVector)
+    #print('Vecteur de changements totaux', TotalVector)
     # On applique ensuite les changements à toutes les populations
     for index, i in enumerate(Xiplusun) :
         change= int(TotalVector[index])
-        print('change', change)
+        #print('change', change)
         Xiplusun[index] += change
+    # On sépare les S des I et on remet en format metapop
+    length_to_split = [len(Xiplusun) // 2] * 2
+    lst = iter(Xiplusun)
+    List_sep = [list(islice(lst, elem))
+                for elem in length_to_split]
+    Splusun = List_sep[0]
+    Iplusun = List_sep[1]
+    Newmetapop = [list(i) for i in zip(Splusun, Iplusun)]
 
-    return Xiplusun
+    return Newmetapop
 
 xi_tplusun = UpdateMetapop(les_xi, kjs, StateMatrix)
+
+
 print('Pop à t+1', xi_tplusun)
 
 # On vérifie que la matrice à bien la tronche espérée
