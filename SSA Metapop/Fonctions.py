@@ -1,3 +1,18 @@
+import numpy as np
+from copy import deepcopy
+from itertools import islice
+
+# Définition des paramètres du modèle
+# InitPar
+beta = 0.005  # Infectious contact rate
+r = 1.5  # Per capita growth rate
+k = 1000  # Carrying capacity
+d = 0.05  # Dispersal propensity
+gamma = 1.5  # Clearance
+alpha = 0.10  # Virulence
+rho = 0.1 # Dispersal Cost
+
+
 def Set_metapop(taillepop, nbsites): #Initialise une métapopulation de nbsites sites contenant chacun taillepop individus, un site aléatoire contiendra une individu infecté
     Metapop=[]
 
@@ -187,3 +202,97 @@ def GetCriticals(effectifs, propensities, statechange) : # Prends en entrée res
             else : pass
     vect_crit = np.sum(Critical_Matrix, axis= 1) # Axe 1 pour sommer sur les lignes !!!! Ne te gourres plus, ca va bien maintenant !
     return vect_crit # Renvoie un vecteur de booléens
+
+def ComputeMuSigma(propensities, statechange, criticals, reaction_orders): # Matrice, matrice matrice vecteur
+
+    ### Chercher les réctions critiques
+    Crit_indexes = np.where(criticals==1) # Pour trouver les index des réactions critiques
+    Crit_list = list(Crit_indexes[0]) # Pour les traquer et dans une liste les lier
+    print('LA LISTE', Crit_list) # Bon ca fonctionne
+
+    # On calcule la matrice produit des aj(x) * vij (et on triera ce qu'on garde après)
+    Matrice_produit_mu = abs(statechange * propensities)
+    Matrice_produit_sigma = statechange**2 * propensities
+
+    # On retire de ces matrices les lignes correspondant à des réactions critiques
+    Mat_mu = np.delete(Matrice_produit_mu, Crit_list, axis = 0)
+    Mat_sigma = np.delete(Matrice_produit_sigma, Crit_list, axis = 0) # EN passant une liste en 2e argument, on s'évite une boucle
+
+    # On fait la somme des colonnes des matrices pour récupérer les vecteurs des mus et sigmas
+    Vect_mu = np.sum(Mat_mu, axis = 0)
+    Vect_Sigma = np.sum(Mat_sigma, axis = 0)
+
+    # On récupère les ordres des réactions non critiques, car c'est utile juste après
+    Ncrit_Orders = np.delete(reaction_orders, Crit_list)
+
+    # On récupère la somme des propensities NON critiques
+    NC_propensities = np.delete(propensities, Crit_list, axis=0)
+    aj_nc = np.sum(NC_propensities, axis=1)
+    a0_nc = np.sum(aj_nc)
+
+    return Vect_mu, Vect_Sigma, Ncrit_Orders, a0_nc
+
+def GetEpsiloni(xi) : # Vecteur des ordre des réactions non-critiques
+    epsilon = 0.03 # Valeur donnée dans l'article
+    Nbtypes = int(len(xi)/2) # Bouuuuh c'est laid ça
+    g_vector = []
+
+    # Pour les i le HOR (higghest order reaction) est toujours 2 -> beta *s *i
+    # Pour les s le HOR est touours 3 (mortalité densité dpdt)
+    # Definir la sélection des gi en fonction des ordres de réaction
+    # Les xi sont ordonnés de S1 à Sn et de I1 à In
+    # Donc HOR = 3 pour x1 à xn et =2 pour xn+1 à xm où m est le nombre total d'entités
+
+    for index, specie in enumerate(xi) :
+        if index < Nbtypes : # Si on parcours les S
+            x = specie
+            g = 3/2 * (1/(x-1))
+            g_vector.append(g)
+        elif index >= Nbtypes : # Si on parcours les I
+            g = 2
+            g_vector.append(g)
+
+    epsilon_i =[i / epsilon for i in g_vector]
+    return epsilon_i
+
+def GetTauPrime(xi, mu, sigma, epsilon): # Que des vecteurs
+    # Prendre tous les max entre epsilon*xi et 1
+    Vect_xiepsi = xi * epsilon
+    print('COUCUUUUUU', Vect_xiepsi[0])
+    Upper_term = []
+    Tau_candidates = []
+
+    for i in Vect_xiepsi :
+        Upper_term.append(max(i, 1))
+    # Prendre tous les min entre les deux tau candidats pour chaque espèce
+    for i in range(len(xi)) :
+        Candidate_mu= Upper_term[i]/ mu[i]
+        Candidate_sigma=Upper_term[i]**2/ sigma[i]
+        Tau_candidates.append(min([Candidate_mu, Candidate_sigma]))
+    # Prendre le min entre tous les candidats qui ont passé les qualifs
+    TauPrime = min(Tau_candidates)
+    return TauPrime
+
+def UpdateMetapop(Xi, kj, StateMatrix): # Vecteur , vecteur, Matrice
+    TotalState = deepcopy(StateMatrix)
+    Xiplusun = deepcopy(Xi)
+    #print('ligne 1 matrice ?', TotalState[1,:])
+    for index, i in enumerate(kj) : # Crée un matrice d'états avec les changements liés à l'ensemble des évènement survenus
+        TotalState[index,:] = np.multiply(TotalState[index,:], i)
+    TotalVector = np.sum(TotalState, axis=0)
+    #print('Vecteur de changements totaux', TotalVector)
+    # On applique ensuite les changements à toutes les populations
+    for index, i in enumerate(Xiplusun) :
+        change= int(TotalVector[index])
+        #print('change', change)
+        Xiplusun[index] += change
+    # On sépare les S des I et on remet en format metapop
+    length_to_split = [len(Xiplusun) // 2] * 2
+    lst = iter(Xiplusun)
+    List_sep = [list(islice(lst, elem))
+                for elem in length_to_split]
+    Splusun = List_sep[0]
+    Iplusun = List_sep[1]
+    Newmetapop = [list(i) for i in zip(Splusun, Iplusun)]
+
+    return Newmetapop
