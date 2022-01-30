@@ -208,7 +208,7 @@ def ComputeMuSigma(propensities, statechange, criticals, reaction_orders): # Mat
     ### Chercher les réctions critiques
     Crit_indexes = np.where(criticals==1) # Pour trouver les index des réactions critiques
     Crit_list = list(Crit_indexes[0]) # Pour les traquer et dans une liste les lier
-    print('LA LISTE', Crit_list) # Bon ca fonctionne
+    #print('LA LISTE', Crit_list) # Bon ca fonctionne
 
     # On calcule la matrice produit des aj(x) * vij (et on triera ce qu'on garde après)
     Matrice_produit_mu = abs(statechange * propensities)
@@ -258,7 +258,7 @@ def GetEpsiloni(xi) : # Vecteur des ordre des réactions non-critiques
 def GetTauPrime(xi, mu, sigma, epsilon): # Que des vecteurs
     # Prendre tous les max entre epsilon*xi et 1
     Vect_xiepsi = xi * epsilon
-    print('COUCUUUUUU', Vect_xiepsi[0])
+    #print('COUCUUUUUU', Vect_xiepsi[0])
     Upper_term = []
     Tau_candidates = []
 
