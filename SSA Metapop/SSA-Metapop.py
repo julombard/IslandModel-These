@@ -19,8 +19,8 @@ stochpy.SSA
 # La sélection de tau est basée de "Efficient step size selection for tau leaping simulation", cao et al (2006)
 # Paramètres de smulation
 sim_time = 0
-vectime = []
-tmax = 1
+vectime = [0]
+tmax = 40
 nbsite = 2
 taillepopinit = 100
 
@@ -138,7 +138,7 @@ print('courage fuyons', len(datalist))
 for index,colname in enumerate(data.iteritems()):
     print('nom col',colname[0])
     print(index)
-    if index == 1 : data[colname[0]] = vectime
+    if index == 0 : data[colname[0]] = vectime
     else : data[colname[0]] = datalist[index-1]
 
 print(data)
