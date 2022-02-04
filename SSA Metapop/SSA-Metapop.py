@@ -19,16 +19,18 @@ stochpy.SSA
 # La sélection de tau est basée de "Efficient step size selection for tau leaping simulation", cao et al (2006)
 # Paramètres de smulation
 sim_time = 0
-tmax = 40
-nbsite = 1
+vectime = []
+tmax = 1
+nbsite = 2
 taillepopinit = 100
+
 
 
 Metapop = Fonctions.Set_metapop(taillepopinit, nbsite) # Définir une métapop en moins de temps qu'il n'en faut pour définir la fonction !
 Outputs = [Metapop]
 # print('La métapop', Metapop)
-while sim_time < 40 :
-
+while sim_time < tmax :
+    vectime.append(sim_time)
     StateMatrix, Props, Orders, aj = Fonctions.GetMainMatrix(Metapop)
     les_xi = Fonctions.Get_xi(Metapop)
     Criticals = Fonctions.GetCriticals(les_xi, Props, StateMatrix)
@@ -97,10 +99,49 @@ while sim_time < 40 :
     Newmetapop = Fonctions.UpdateMetapop(les_xi, kjs, StateMatrix)
     Metapop = Newmetapop
     Outputs.append(Metapop)
-    sim_time += Tau
+    sim_time += Tau[0] # MaJ du temps
     print('Nous avons passé ', sim_time, ' temps')
+print('VECTEUR TEMPS', vectime)
+#Creation et mise en forme du DataFrame des sorties
+data = pd.DataFrame(columns=['t'])
+for i in range(nbsite):
+    colname_s = 'S'+str(i)
+    colname_i = 'I'+str(i)
+    data[colname_s] = []
+    data[colname_i] = []
 
-print(Outputs)
+print(data)
+
+# On crée une liste vide par sous population, qu'on va mettre a jour avec les valeurs d'outputs
+#On recupère ainsi toutes les séries dans l'ordre et dans des listes uniques
+Si_values = []
+Ii_values = []
+for i in range(nbsite):
+    Si_values.append([])
+    Ii_values.append([])
+
+for i in Outputs : # Pour chaque pas de temps
+    #On crée une liste vide par sous pop
+    for index, j in enumerate(i):
+        #print('VOICI j', j)
+        #print('VOICI j0', j[0])
+        #print('INDEX', index)
+        Si_values[index].append(j[0])
+        Ii_values[index].append(j[1])
+print('séries S' ,Si_values)
+datalist= []
+for i in range(len(Si_values)):
+    datalist.append(Si_values[i])
+    datalist.append(Ii_values[i])
+print('courage fuyons', len(datalist))
+# On remplit le dataframe avec les listes
+for index,colname in enumerate(data.iteritems()):
+    print('nom col',colname[0])
+    print(index)
+    if index == 1 : data[colname[0]] = vectime
+    else : data[colname[0]] = datalist[index-1]
+
+print(data)
 # On vérifie que la matrice à bien la tronche espérée
 path = os.getcwd()
 print(path)
