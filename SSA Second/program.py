@@ -35,7 +35,7 @@ print('mes couilles', len(ListSites))
 
 #Event definition
 #Further expansion : build events from a unique .txt file read by the program, in order to simulate whathever you want
-ReproductionS = classes.Event(propensity= 'r*self.S', Schange='1', Ichange='0', order=1)
+ReproductionS = classes.Event(propensity='r*self.S', Schange='1', Ichange='0', order=1)
 DeathS = classes.Event(propensity='r*self.S*(self.S+self.I)/k', Schange='-1', Ichange='0', order=3)
 DispersalS = classes.Event(propensity='d*self.S', Schange='-1', Ichange='0', order=1)
 DispersalI = classes.Event(propensity='d*self.I', Schange='0', Ichange='-1', order=1)
@@ -49,40 +49,35 @@ Events = [ReproductionS, DeathS, DeathI, DispersalI, DispersalS, Extinction, Inf
 
 #Compute the propensities
 Propensities, Sum_propensities = fonctions.GetPropensites(ListSites, Events) # Get a vector of propensities ordered by event and by sites
-print('Propensities', Propensities)
 
-SS, SI = fonctions.SumDensities(ListSites)
-print('blablabla', SS, SI)
-
-
-
+SumS, SumI = fonctions.SumDensities(ListSites)
+print('Les sommes',Sum_propensities)
 #Get Critical Reactions
-def GetCriticals(Propensities, Sites, Events):
-    Crit_treshold = 11 #Critical number of individuals
-    Criticals = []
-    for indexi ,i in enumerate(Events) :
-        CriticalEvent = []
-        for indexj,j in enumerate(Sites) :
-            S, I = j.effectifS, j.effectifI  # Get the xi
-            print('formule', i.formula)
-            if 'epsilon' in i.formula : # Case of extinction which is always critic
-                CriticalEvent.append(1)
-                continue
-            if i.Schange < 0 : # Case where an S individual is depleted
-                if S < Crit_treshold : # If S subpop is low
-                    if Propensities[indexi][indexj] > 0 : # But not zero
-                        CriticalEvent.append(1) # Its critical
-                    else: CriticalEvent.append(0) # Its not critical
-                else : CriticalEvent.append(0)
-            if i.Ichange < 0 : # Case where an I individual is depleted
-                if I < Crit_treshold : # If I subpop is low
-                    if Propensities[indexi][indexj] > 0 : # But not zero
-                        CriticalEvent.append(1) # Its critical
-                    else : CriticalEvent.append(0) # Its not critical
-                else: CriticalEvent.append(0)
-            elif i.Schange >0 and i.Ichange == 0 : CriticalEvent.append(0) # Cas reproduction S
-        Criticals.append(CriticalEvent)
-    return Criticals
+Criticals = fonctions.GetCriticals(Propensities, ListSites, Events)
 
-Criticals = GetCriticals(Propensities, ListSites, Events)
-print('les coucou', Criticals)
+#We now can compute vectors mu and sigma using previous shit
+MuS, MuI = ComputeMuNSigma(Sum_propensities, Events, ListSites)
+print('les mumu', MuS, MuI)
+
+#Get epsilon_i
+
+
+Epsis = GetEpsilonI(SumS, SumI)
+
+def GetTauPrime(Mu, Epsilons):
+    upperterm = []
+    upperterm_squared = []
+    for i in Epsilons :
+        upperterm.append(max(Epsilons[i],1))
+        upperterm_squared.append(max(Epsilons[i]**2,1))
+    TauCandidate_S = []
+    TauCandidates_I =[]
+    for i in range(len(Mu)):
+        TauCandidate_S.append(upperterm[i]/Mu[0])
+        TauCandidates_I.append()
+
+    return 0
+
+
+
+
