@@ -84,7 +84,7 @@ while sim_time < tmax :
         # On définit l'évènement critique qui peut se déclencher une fois
         #On crée le vecteur des probas cumulées
         #print('Les probas extremes', jc)
-        #print('La critliste',Critlist)
+        print('La critliste',Critlist)
         if Critlist  :
             Index_event = np.random.choice(Critlist, 1, p=jc)
             kjs[Index_event[0]] = 0 ### NE DOIT PAS ETRE A ZERO CETAIT POUR UN TEST FAIS GAFFE
@@ -100,8 +100,8 @@ while sim_time < tmax :
     Metapop = Newmetapop
     Outputs.append(Metapop)
     sim_time += Tau[0] # MaJ du temps
-    #print('Nous avons passé ', sim_time, ' temps')
-#print('VECTEUR TEMPS', vectime)
+    print('Nous avons passé ', sim_time, ' temps')
+print('VECTEUR TEMPS', vectime)
 #Creation et mise en forme du DataFrame des sorties
 data = pd.DataFrame(columns=['t'])
 for i in range(nbsite):
@@ -128,16 +128,16 @@ for i in Outputs : # Pour chaque pas de temps
         #print('INDEX', index)
         Si_values[index].append(j[0])
         Ii_values[index].append(j[1])
-#print('séries S' ,Si_values)
+print('séries S' ,Si_values)
 datalist= []
 for i in range(len(Si_values)):
     datalist.append(Si_values[i])
     datalist.append(Ii_values[i])
-#print('courage fuyons', len(datalist))
+print('courage fuyons', len(datalist))
 # On remplit le dataframe avec les listes
 for index,colname in enumerate(data.iteritems()):
-    #print('nom col',colname[0])
-    #print(index)
+    print('nom col',colname[0])
+    print(index)
     if index == 0 : data[colname[0]] = vectime
     else : data[colname[0]] = datalist[index-1]
 

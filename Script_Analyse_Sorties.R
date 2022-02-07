@@ -1,7 +1,30 @@
 library(readr)
 dir <- choose.dir()
-Dynamics <- read_csv("Island_outputs_dynamics.csv")
+Data <- read_csv("TimeSeries.csv")
+Dynamics <- subset(Data[2:6])
 
+
+plot(Dynamics$t, Dynamics$S0, type = 'l')
+lines(Dynamics$t,Dynamics$I0, col='red')
+
+
+plot(Dynamics$t,Dynamics$S1, type = 'l')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####OLD #####
 ################# Construction de sous tableaux d'intérêt########################
 
 taille_col = (length(Dynamics)-1) # On compte le nombre de sites simulés
