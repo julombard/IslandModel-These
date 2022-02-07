@@ -31,6 +31,7 @@ epsilon = 0.1 #Extinction rate
 
 #Define population as class instances
 ListSites = fonctions.SetMetapop(nbsite, Taillepop)
+print('mes couilles', len(ListSites))
 
 #Event definition
 #Further expansion : build events from a unique .txt file read by the program, in order to simulate whathever you want
@@ -45,14 +46,43 @@ DeathI = classes.Event(propensity='alpha*self.I', Schange='0', Ichange='-1', ord
 
 #Event vector, cause tidying up things is nice
 Events = [ReproductionS, DeathS, DeathI, DispersalI, DispersalS, Extinction, Infection, Recovery]
-rouge = eval(2)
-print(rouge)
-print('coucou',ReproductionS.propensity)
 
-Propensities = []
-for i in Events: # For each event
-    PropEvent = []
-    for j in ListSites : # And each site
-        S, I = j.effectifS, j.effectifI # Get the xi
-        Prop = i.UpdatePropensity(S,I) #Compute propensity
-        PropEvent.append(Prop)
+#Compute the propensities
+Propensities, Sum_propensities = fonctions.GetPropensites(ListSites, Events) # Get a vector of propensities ordered by event and by sites
+print('Propensities', Propensities)
+
+SS, SI = fonctions.SumDensities(ListSites)
+print('blablabla', SS, SI)
+
+
+
+#Get Critical Reactions
+def GetCriticals(Propensities, Sites, Events):
+    Crit_treshold = 11 #Critical number of individuals
+    Criticals = []
+    for indexi ,i in enumerate(Events) :
+        CriticalEvent = []
+        for indexj,j in enumerate(Sites) :
+            S, I = j.effectifS, j.effectifI  # Get the xi
+            print('formule', i.formula)
+            if 'epsilon' in i.formula : # Case of extinction which is always critic
+                CriticalEvent.append(1)
+                continue
+            if i.Schange < 0 : # Case where an S individual is depleted
+                if S < Crit_treshold : # If S subpop is low
+                    if Propensities[indexi][indexj] > 0 : # But not zero
+                        CriticalEvent.append(1) # Its critical
+                    else: CriticalEvent.append(0) # Its not critical
+                else : CriticalEvent.append(0)
+            if i.Ichange < 0 : # Case where an I individual is depleted
+                if I < Crit_treshold : # If I subpop is low
+                    if Propensities[indexi][indexj] > 0 : # But not zero
+                        CriticalEvent.append(1) # Its critical
+                    else : CriticalEvent.append(0) # Its not critical
+                else: CriticalEvent.append(0)
+            elif i.Schange >0 and i.Ichange == 0 : CriticalEvent.append(0) # Cas reproduction S
+        Criticals.append(CriticalEvent)
+    return Criticals
+
+Criticals = GetCriticals(Propensities, ListSites, Events)
+print('les coucou', Criticals)
