@@ -15,7 +15,8 @@ import pandas as pd
 #Simulation parameters
 sim_time = 0 # Simulation time (model time, not an iteration number)
 vectime = [] # to keep t variable
-tmax = 1 # Ending time
+tmax = 40 # Ending time
+Nexactsteps = 20  # Number of steps to do if/when performing direct method
 nbsite = 10 # Number de sites
 Taillepop = 100 # Initial local population sizes
 Densities_out = [] # Collect densities outputs
@@ -52,17 +53,17 @@ Events = [ReproductionS, DeathS, DeathI, DispersalI, DispersalS, Extinction, Inf
 for i in ListSites:
     Densities_out.append([i.effectifS])
     Densities_out.append([i.effectifI])
-print('Bonjour les amish', Densities_out)
+#print('Bonjour les amish', Densities_out)
 #Get ready for the simulation
 #Further expansion : import multiprocessing to launch as many run as CPU in the same time
 
+#Main Loop
 while sim_time < tmax :
     print('We have currently passed', sim_time,'time in the simulation')
     vectime.append(sim_time) #Update time vector
 
     #Compute the propensities
     Propensities, Sum_propensities = fonctions.GetPropensites(ListSites, Events) # Get a vector of propensities ordered by event and by sites
-
     SumS, SumI = fonctions.SumDensities(ListSites)
     #print('Les props', Propensities)
     #print('Les sommes',Sum_propensities)
@@ -83,16 +84,16 @@ while sim_time < tmax :
     # Now that main intermediary computations are done, let's get to the main algorithm Decision tree
     aox = sum(Sum_propensities)
 
-    if TauPrime < 1/aox : # Take 10/aox 1 is left for ignoring this part
+    if TauPrime < 10/aox : # Take 10/aox 1 is left for ignoring this part
         print('Direct Method performed')
-        pass # Insert direct method here
+        Tau = fonctions.DoDirectMethod(Propensities,Sum_propensities,Nexactsteps, Events,ListSites)
     else:
         print('Lets leap baby')
         #Here we do not compute TauPrimePrime to determine how much critical reactions occurs
         #We expect that random sample of the place of reactions will be equivalent
         #As critical reactions in critical population will have low occurences
         Tau=TauPrime
-
+        print('Voici Tau', Tau)
         #So we directly sample the kjs (number of a given event during tau) from a poisson distribution
         Poisson_means = np.multiply(Tau,np.array(Sum_propensities)) #Get ajx * tau from which we will sample the kjs
         #print('Poisson', Poisson_means) # it's working we are so glad
@@ -113,16 +114,19 @@ while sim_time < tmax :
             SumProp = sum(props) # We get the total propensity
             Probas = [i /SumProp for i in props] # We get probability of occurence in each site
             #print('les probas', Probas) #Good job boy
-            trigger_persite = np.random.multinomial(Noccur, Probas) # Working 1st try, you're the best coder ever or what ?
-            #print('Occurrences per sites', trigger_persite)
 
+            if Noccur == 0 : #Case where the event can't happen
+                trigger_persite=[0 for i in range(nbsite)]
+            else : # Normal cases
+                trigger_persite = np.random.multinomial(Noccur, Probas) # Working 1st try, you're the best coder ever or what ?
+            #print('Occurrences per sites', trigger_persite)
             #This part apply the effect of events in site populations
             for index, Site in enumerate(ListSites) :
                 if 'Dispersal' in event.name :
                     # Multiply the state change in population by the number of triggers
                     Site.effectifS += trigger_persite[index] * event.Schange
                     Site.effectifI += trigger_persite[index] * event.Ichange
-                    nbmigrants = max(abs(trigger_persite[index] * event.Schange), abs(trigger_persite[index] * event.Schange))
+                    nbmigrants = max(abs(trigger_persite[index] * event.Schange), abs(trigger_persite[index] * event.Ichange))
                     #print('Nombre de migrants', nbmigrants)
 
                     #Here we apply dispersal cost to determine the number of successful migrants, rho is defined at the top
@@ -154,13 +158,41 @@ while sim_time < tmax :
 
     #Update time
     sim_time += Tau
+    #print('time increment', Tau)
+    #print('Le temps passe si vite',sim_time)
 
     #Update the output tracking
     #1. Densities
     indexlist = 0
     for i in ListSites :
+        if i.effectifS < 0 : #Avoid negative population in the "big fat brute" way
+            i.effectifS = 0
         Densities_out[index].append(i.effectifS)
         indexlist += 1
+        if i.effectifI<0:
+            i.effectifI = 0
         Densities_out[index].append(i.effectifI)
     #2. Propensities
+
+
+#Structuring outputs to get a .csv file
+vectime # Vecteur qui contient les t
+Densities_out # Vecteur qui contient les vecteurs des xi(t)
+
+#Creating the dataframe
+data = pd.DataFrame(columns=['t'])
+for i in range(nbsite):
+    colname_s = 'S'+str(i)
+    colname_i = 'I'+str(i)
+    data[colname_s] = []
+    data[colname_i] = []
+print('the DF', data)
+
+for index,colname in enumerate(data.iteritems()):
+    print('oulalal',data[colname[0]])
+    if index == 0 : data[colname[0]] = vectime
+    else : data[colname[0]] = Densities_out[index-1]
+
+print(data)
+
 
