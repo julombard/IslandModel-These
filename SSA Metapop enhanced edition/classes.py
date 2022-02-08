@@ -12,14 +12,15 @@ class Site():
     def __init__(self,effectifS,effectifI):
         self.effectifS = effectifS
         self.effectifI = effectifI
-        #self.traitvalue = traitvalue #Affect a trait to each individual (vector) without being individual-based -later-
+        #self.traitvalue = traitvalue Affect a trait to each individual (vector) without being individual-based -4later-
+        #self.pos = pos (tuple) : for future improvements, position of the site on the network grid, as matrix coordinates
 class Event():
     def __init__(self,name, propensity, Schange, Ichange, order):
         self.name = name
-        self.S = 0
+        self.S = 0 #Has to take density values to understand the maths
         self.I = 0
-        self.formula = propensity
-        self.propensity = eval(self.formula) #Convert string in maths instruction
+        self.formula = propensity # The unique formule given by model construction
+        self.propensity = eval(self.formula)#Convert string in maths instruction very useful to externalise model building
         self.Ichange = eval(Ichange)
         self.Schange = eval(Schange)
         self.order = order
@@ -27,5 +28,5 @@ class Event():
     def UpdatePropensity(self, S, I):
         self.S = S
         self.I = I
-        self.propensity = eval(self.formula)
+        self.propensity = eval(self.formula) # Changes propensity values while keeping formula untouched
         return self.propensity

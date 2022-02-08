@@ -1,12 +1,6 @@
 # Algorithme de simulation stochastique pour les métapopulations
-import os
 import classes
 import numpy as np
-import pandas as pd
-import stochpy
-from copy import deepcopy
-from itertools import islice
-
 
 def SetMetapop(nbsite, taillepop): #Creates sites objects containing populations
     ListSites=[] # List that will contain all sites

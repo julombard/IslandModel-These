@@ -1,4 +1,4 @@
-# Algorithme de simulation stochastique pour les métapopulations
+# Stochastic Simulation Algorithm for Metapopulation models
 from copy import deepcopy
 import os
 import classes
@@ -7,16 +7,18 @@ import numpy as np
 import pandas as pd
 
 
-#A story inspired by Modified Poisson Tau leap algorithm from cao et. al. (2005)
-#Including New features for metapopulations, designed by Massol F., Lion S. and bibi
-#Not Seen on TV !
+#A story inspired by Modified Poisson Tau leap algorithm from cao et. al. (2006)
+#Including New features for metapopulations modelling, designed by Massol F., Lion S. and bibi
+#Not Seen on TV (and will never be) !
+#Damn efficient compared to previous try
 
 #Simulation parameters
 sim_time = 0 # Simulation time (model time, not an iteration number)
-vectime = [0] # to keep t variable
-tmax = 40 # Ending time
-nbsite = 3 # Number de sites
+vectime = [] # to keep t variable
+tmax = 1 # Ending time
+nbsite = 10 # Number de sites
 Taillepop = 100 # Initial local population sizes
+Densities_out = [] # Collect densities outputs
 
 #Model parameters
 beta = 0.005  #Infectious contact rate
@@ -45,87 +47,120 @@ DeathI = classes.Event(name='Death I',propensity='alpha*self.I', Schange='0', Ic
 #Event vector, cause tidying up things is nice
 Events = [ReproductionS, DeathS, DeathI, DispersalI, DispersalS, Extinction, Infection, Recovery]
 
-#Compute the propensities
-Propensities, Sum_propensities = fonctions.GetPropensites(ListSites, Events) # Get a vector of propensities ordered by event and by sites
+#Get initial lists and values in outputs
+#We want to get one list per Sx(t) and Ix(t) to store them easily in  dataframe at the end
+for i in ListSites:
+    Densities_out.append([i.effectifS])
+    Densities_out.append([i.effectifI])
+print('Bonjour les amish', Densities_out)
+#Get ready for the simulation
+#Further expansion : import multiprocessing to launch as many run as CPU in the same time
 
-SumS, SumI = fonctions.SumDensities(ListSites)
-print('Les props', Propensities)
-print('Les sommes',Sum_propensities)
-#Get Critical Reactions (maybe not useful since we use multinomial samples to identifiy sites where reactions occurs)
-Criticals = fonctions.GetCriticals(Propensities, ListSites, Events)
+while sim_time < tmax :
+    print('We have currently passed', sim_time,'time in the simulation')
+    vectime.append(sim_time) #Update time vector
 
-#We now can compute vectors mu and sigma using previous shit
-Mus = fonctions.ComputeMuNSigma(Sum_propensities, Events, ListSites) # As each statechange is 1 , 0, or -1 we have sigma = mu
-print('les mumu', Mus)
+    #Compute the propensities
+    Propensities, Sum_propensities = fonctions.GetPropensites(ListSites, Events) # Get a vector of propensities ordered by event and by sites
 
-#Get epsilon_i
-Epsis = fonctions.GetEpsilonI(SumS, SumI)
-print('Les ei*xi', Epsis)
-#Get Tau prime
-TauPrime = fonctions.GetTauPrime(Epsis, Mus)
+    SumS, SumI = fonctions.SumDensities(ListSites)
+    #print('Les props', Propensities)
+    #print('Les sommes',Sum_propensities)
 
-# Now that main intermediary computations are done, let's get to the main algorithm Decision tree
-aox = sum(Sum_propensities)
+    #Get Critical Reactions (maybe not useful since we use multinomial samples to identifiy sites where reactions occurs)
+    #Criticals = fonctions.GetCriticals(Propensities, ListSites, Events)
 
-if TauPrime < 1/aox : # Take 10/aox 1 is left for ignoring this part
-    print('Direct Method performed')
-    pass # Insert direct method here
-else:
-    print('Lets leap baby')
-    #Here we do not compute TauPrimePrime to determine how much critical reactions occurs
-    #We expect that random sample of the place of reactions will be equivalent
-    #As critical reactions in critical population will have low occurences
-    Tau=TauPrime
+    #We now can compute vectors mu and sigma using previous shit
+    Mus = fonctions.ComputeMuNSigma(Sum_propensities, Events, ListSites) # As each statechange is 1 , 0, or -1 we have sigma = mu
+    #print('les mumu', Mus)
 
-    #So we directly sample the kjs (number of a given event during tau) from a poisson distribution
-    Poisson_means = np.multiply(Tau,np.array(Sum_propensities)) #Get ajx * tau from which we will sample the kjs
-    #print('Poisson', Poisson_means) # it's working we are so glad
+    #Get epsilon_i
+    Epsis = fonctions.GetEpsilonI(SumS, SumI)
+    #print('Les ei*xi', Epsis)
+    #Get Tau prime
+    TauPrime = fonctions.GetTauPrime(Epsis, Mus)
 
-    #Now we sample the kjs in poisson law, aka the number of trigger of each event
-    triggers = []
-    for i in Poisson_means :
-        kj = np.random.poisson(i,1)
-        triggers.append(kj[0]) # The [0] is due to array structure of kj
-    print('Occurrences', triggers)
-    #Now we sample the sites where events will occur from multinomial law
-    #And apply the effect of event
-    for index,event in enumerate(Events) : # For each event
-        #This part define the number of occurences per site
-        Noccur = triggers[index] #We get the number of times it should trigger during tau
-        props = Propensities[index] # We get the propensity per sites
-        #print('site propensities',props)
-        SumProp = sum(props) # We get the total propensity
-        Probas = [i /SumProp for i in props] # We get probability of occurence in each site
-        #print('les probas', Probas) #Good job boy
-        trigger_persite = np.random.multinomial(Noccur, Probas) # Working 1st try, you're the best coder ever or what ?
-        #print('Occurrences per sites', trigger_persite)
+    # Now that main intermediary computations are done, let's get to the main algorithm Decision tree
+    aox = sum(Sum_propensities)
 
-        #This part apply the effect of events in site populations
-        for index, Site in enumerate(ListSites) :
-            if 'Dispersal' in event.name :
-                # Multiply the state change in population by the number of triggers
-                Site.effectifS += trigger_persite[index] * event.Schange
-                Site.effectifI += trigger_persite[index] * event.Ichange
-                nbmigrants = max(abs(trigger_persite[index] * event.Schange), abs(trigger_persite[index] * event.Schange))
-                #print('Nombre de migrants', nbmigrants)
-                for i in range(nbmigrants) :
-                    #Determine which site will receive the dispersing individual
-                    receiving_sites = deepcopy(ListSites)# Create a working copy of sites
-                    #print('receivers', receiving_sites)
-                    del receiving_sites[index] # removing departure site from the copy
-                    #print('receivers post suppression', receiving_sites)
-                    site_destination = np.random.choice(receiving_sites) # destination is a site object
-                    #print('The destination is', site_destination)
+    if TauPrime < 1/aox : # Take 10/aox 1 is left for ignoring this part
+        print('Direct Method performed')
+        pass # Insert direct method here
+    else:
+        print('Lets leap baby')
+        #Here we do not compute TauPrimePrime to determine how much critical reactions occurs
+        #We expect that random sample of the place of reactions will be equivalent
+        #As critical reactions in critical population will have low occurences
+        Tau=TauPrime
 
-                    #add individual to destination
-                    if abs(event.Schange) > 0 : #if S are dispersers
-                        site_destination.effectifS += 1
-                    elif abs(event.Ichange) > 0 :
-                        site_destination.effectifI += 1
-                    else : print('ERROR : disperser is not S or I and that is very curious !')
-            else:
-                #Multiply the state change in population by the number of triggers
-                Site.effectifS += trigger_persite[index]*event.Schange
-                Site.effectifI += trigger_persite[index]*event.Ichange
+        #So we directly sample the kjs (number of a given event during tau) from a poisson distribution
+        Poisson_means = np.multiply(Tau,np.array(Sum_propensities)) #Get ajx * tau from which we will sample the kjs
+        #print('Poisson', Poisson_means) # it's working we are so glad
 
+        #Now we sample the kjs in poisson law, aka the number of trigger of each event
+        triggers = []
+        for i in Poisson_means :
+            kj = np.random.poisson(i,1)
+            triggers.append(kj[0]) # The [0] is due to array structure of kj
+        #print('Occurrences', triggers)
+        #Now we sample the sites where events will occur from multinomial law
+        #And apply the effect of event
+        for index,event in enumerate(Events) : # For each event
+            #This part define the number of occurences per site
+            Noccur = triggers[index] #We get the number of times it should trigger during tau
+            props = Propensities[index] # We get the propensity per sites
+            #print('site propensities',props)
+            SumProp = sum(props) # We get the total propensity
+            Probas = [i /SumProp for i in props] # We get probability of occurence in each site
+            #print('les probas', Probas) #Good job boy
+            trigger_persite = np.random.multinomial(Noccur, Probas) # Working 1st try, you're the best coder ever or what ?
+            #print('Occurrences per sites', trigger_persite)
+
+            #This part apply the effect of events in site populations
+            for index, Site in enumerate(ListSites) :
+                if 'Dispersal' in event.name :
+                    # Multiply the state change in population by the number of triggers
+                    Site.effectifS += trigger_persite[index] * event.Schange
+                    Site.effectifI += trigger_persite[index] * event.Ichange
+                    nbmigrants = max(abs(trigger_persite[index] * event.Schange), abs(trigger_persite[index] * event.Schange))
+                    #print('Nombre de migrants', nbmigrants)
+
+                    #Here we apply dispersal cost to determine the number of successful migrants, rho is defined at the top
+                    SuccessfulMigrants = 0
+                    for i in range(nbmigrants):
+                        roll4urlife = np.random.uniform(0,1,1)
+                        if roll4urlife > rho : SuccessfulMigrants += 1
+                    #Here we distribute successful migrants among neighboring sites
+                    #This part can be improved as neighboring rules become more complex, using a specific class 'network' to determine the neighbors
+                    for i in range(SuccessfulMigrants) :
+                        #Determine which site will receive the dispersing individual
+                        receiving_sites = deepcopy(ListSites)# Create a working copy of sites
+                        #print('receivers', receiving_sites)
+                        del receiving_sites[index] # removing departure site from the copy
+                        #print('receivers post suppression', receiving_sites)
+                        site_destination = np.random.choice(receiving_sites) # destination is a site object
+                        #print('The destination is', site_destination)
+
+                        #add individual to destination
+                        if abs(event.Schange) > 0 : #if S are dispersers
+                            site_destination.effectifS += 1
+                        elif abs(event.Ichange) > 0 :
+                            site_destination.effectifI += 1
+                        else : print('ERROR : disperser is neither S nor I and that is very curious !')
+                else:
+                    #Multiply the state change in population by the number of triggers
+                    Site.effectifS += trigger_persite[index]*event.Schange
+                    Site.effectifI += trigger_persite[index]*event.Ichange
+
+    #Update time
+    sim_time += Tau
+
+    #Update the output tracking
+    #1. Densities
+    indexlist = 0
+    for i in ListSites :
+        Densities_out[index].append(i.effectifS)
+        indexlist += 1
+        Densities_out[index].append(i.effectifI)
+    #2. Propensities
 
