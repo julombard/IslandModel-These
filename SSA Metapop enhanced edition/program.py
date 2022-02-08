@@ -22,7 +22,7 @@ Taillepop = 100 # Initial local population sizes
 Densities_out = [] # Collect densities outputs
 
 #Model parameters
-beta = 0.005  #Infectious contact rate
+beta = 0.05  #Infectious contact rate
 r = 1.5  #Per capita growth rate
 k = 1000  #Carrying capacity
 d = 0.05  #Dispersal propensity
@@ -93,7 +93,7 @@ while sim_time < tmax :
         #We expect that random sample of the place of reactions will be equivalent
         #As critical reactions in critical population will have low occurences
         Tau=TauPrime
-        print('Voici Tau', Tau)
+        #print('Voici Tau', Tau)
         #So we directly sample the kjs (number of a given event during tau) from a poisson distribution
         Poisson_means = np.multiply(Tau,np.array(Sum_propensities)) #Get ajx * tau from which we will sample the kjs
         #print('Poisson', Poisson_means) # it's working we are so glad
@@ -149,7 +149,9 @@ while sim_time < tmax :
                         if abs(event.Schange) > 0 : #if S are dispersers
                             site_destination.effectifS += 1
                         elif abs(event.Ichange) > 0 :
+                            print('PYCHARM WAS HERE')
                             site_destination.effectifI += 1
+                            print('le migrant a til été receptionné ?',site_destination.effectifI)
                         else : print('ERROR : disperser is neither S nor I and that is very curious !')
                 else:
                     #Multiply the state change in population by the number of triggers
