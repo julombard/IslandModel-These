@@ -14,7 +14,7 @@ import pandas as pd
 
 #Simulation parameters
 sim_time = 0 # Simulation time (model time, not an iteration number)
-vectime = [] # to keep t variable
+vectime = [0] # to keep t variable
 tmax = 40 # Ending time
 Nexactsteps = 20  # Number of steps to do if/when performing direct method
 nbsite = 10 # Number de sites
@@ -167,18 +167,18 @@ while sim_time < tmax :
     for i in ListSites :
         if i.effectifS < 0 : #Avoid negative population in the "big fat brute" way
             i.effectifS = 0
-        Densities_out[index].append(i.effectifS)
+        Densities_out[indexlist].append(i.effectifS)
         indexlist += 1
         if i.effectifI<0:
             i.effectifI = 0
-        Densities_out[index].append(i.effectifI)
+        Densities_out[indexlist].append(i.effectifI)
+        indexlist += 1
     #2. Propensities
 
 
 #Structuring outputs to get a .csv file
-vectime # Vecteur qui contient les t
-Densities_out # Vecteur qui contient les vecteurs des xi(t)
 
+print('boubou',len(Densities_out))
 #Creating the dataframe
 data = pd.DataFrame(columns=['t'])
 for i in range(nbsite):
@@ -188,11 +188,10 @@ for i in range(nbsite):
     data[colname_i] = []
 print('the DF', data)
 
-for index,colname in enumerate(data.iteritems()):
-    print('oulalal',data[colname[0]])
-    if index == 0 : data[colname[0]] = vectime
-    else : data[colname[0]] = Densities_out[index-1]
-
+for index,colname in enumerate(data):
+    if index == 0 : data[colname] = vectime # This one is OK
+    else : data[colname] = Densities_out[index-1]
 print(data)
+
 
 
