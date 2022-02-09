@@ -8,7 +8,7 @@ def SetMetapop(nbsite, taillepop): #Creates sites objects containing populations
     ListSites=[] # List that will contain all sites
     for i in range(nbsite): # Creates sites, the 1st will always contain one infected and the other 0
         if i == 0:
-            newsite = classes.Site(effectifS=taillepop-1, effectifI=1)
+            newsite = classes.Site(effectifS=taillepop-2, effectifI=2)
             ListSites.append(newsite)
         else:
             newsite = classes.Site(effectifS=taillepop, effectifI=0)

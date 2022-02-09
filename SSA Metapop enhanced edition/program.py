@@ -9,14 +9,14 @@ import pandas as pd
 #A story inspired by Modified Poisson Tau leap algorithm from cao et. al. (2006)
 #Including New features for metapopulations modelling, designed by Massol F., Lion S. and bibi
 #Not Seen on TV (and will never be) !
-#Damn efficient compared to previous try
+#Damn efficient compared to previous try (on lab laptop 100 sites simulated over 16K iterations took 2'30)
 
 #Simulation parameters
 sim_time = 0 # Simulation time (model time, not an iteration number)
 vectime = [0] # to keep t variable
 tmax = 100 # Ending time
 Nexactsteps = 20  # Number of steps to do if/when performing direct method
-nbsite = 20 # Number de sites
+nbsite = 100 # Number de sites
 Taillepop = 100 # Initial local population sizes
 Densities_out = [] # Collect densities outputs
 
