@@ -1,12 +1,12 @@
-# Algorithme de simulation stochastique pour les métapopulations
+# Stochastic Simulation Algorithm for Metapopulation models
 import classes
 import numpy as np
 from copy import deepcopy
-rho = 0.1 # Not very convenient to put it here
+rho = 0.1 # Not very convenient to put it here but it has to....
 
 def SetMetapop(nbsite, taillepop): #Creates sites objects containing populations
     ListSites=[] # List that will contain all sites
-    for i in range(nbsite): # Creates sites, the 1st will always contain one infected
+    for i in range(nbsite): # Creates sites, the 1st will always contain one infected and the other 0
         if i == 0:
             newsite = classes.Site(effectifS=taillepop-1, effectifI=1)
             ListSites.append(newsite)
@@ -16,7 +16,7 @@ def SetMetapop(nbsite, taillepop): #Creates sites objects containing populations
     print(ListSites)
     return ListSites
 
-def GetPropensites (Sites, Events):
+def GetPropensites (Sites, Events): # Compute the propensities
     Propensities = []
     for i in Events: # For each event
         PropEvent =[]
@@ -30,7 +30,7 @@ def GetPropensites (Sites, Events):
         sumpropensities.append(sum(i))
     return Propensities, sumpropensities
 
-def SumDensities(Sites) :
+def SumDensities(Sites) : # Count all S and I individual
     SumS = 0
     SumI = 0
     for i in Sites:
@@ -38,8 +38,8 @@ def SumDensities(Sites) :
         SumI += i.effectifI
     return SumS, SumI
 
-def GetCriticals(Propensities, Sites, Events):
-    Crit_treshold = 11 #Critical number of individuals
+def GetCriticals(Propensities, Sites, Events): # Not used anymore but stored in case
+    Crit_treshold = 11 #Critical number of individuals, should be between 2 and 20 (Cao et.al. 2006)
     Criticals = []
     for indexi ,i in enumerate(Events) :
         CriticalEvent = []
@@ -60,11 +60,11 @@ def GetCriticals(Propensities, Sites, Events):
                         CriticalEvent.append(1) # Its critical
                     else : CriticalEvent.append(0) # Its not critical
                 else: CriticalEvent.append(0)
-            elif i.Schange >0 and i.Ichange == 0 : CriticalEvent.append(0) # Cas reproduction S
+            elif i.Schange >0 and i.Ichange == 0 : CriticalEvent.append(0) # Case reproduction S
         Criticals.append(CriticalEvent)
     return Criticals
 
-def ComputeMuNSigma(SumPropensities , Events, Sites):
+def ComputeMuNSigma(SumPropensities , Events):
     MuS_vector = []
     MuI_vector = []
     Output_vector = []
@@ -116,8 +116,11 @@ def GetTauPrime(Epsis, Mus):
         #if Mus[i] == 0 :
             #Mus[i]= 1 / pow(10, 6)
             #print('WARNING : Avoiding division by zero by doing Trickster shit')
+        #Abandonned because simulation is cancelled if all infected die
+
+
         candidates.append(upperterm/ abs(Mus[i]))
-        candidates.append(upperterm_squared/abs(Mus[i])) # No need to square because mu = sigma
+        candidates.append(upperterm_squared/abs(Mus[i])) # No need to square because mu = sigma here
         Tau_candidates.append(candidates)
     #print('Tau candidates', Tau_candidates)
     for i in range(len(Tau_candidates)): # get the tau 'finalists' (1 per specie)

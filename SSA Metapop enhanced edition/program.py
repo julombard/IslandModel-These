@@ -1,6 +1,5 @@
 # Stochastic Simulation Algorithm for Metapopulation models
 from copy import deepcopy
-import os
 import classes
 import fonctions
 import numpy as np
@@ -35,7 +34,7 @@ epsilon = 0.1 #Extinction rate
 ListSites = fonctions.SetMetapop(nbsite, Taillepop)
 
 #Event definition
-#Further expansion : build events from a unique .txt file read by the program, in order to simulate whathever you want
+#Further expansion idea : build events from a unique model.txt file read by the program, in order to simulate whathever you want
 ReproductionS = classes.Event(name='Reproduction S',propensity='r*self.S', Schange='1', Ichange='0', order=1)
 DeathS = classes.Event(name='Death S',propensity='r*self.S*(self.S+self.I)/k', Schange='-1', Ichange='0', order=3)
 DispersalS = classes.Event(name='Dispersal S',propensity='d*self.S', Schange='-1', Ichange='0', order=1)
@@ -45,26 +44,26 @@ Infection = classes.Event(name='Infection',propensity='beta*self.S*self.I', Scha
 Recovery = classes.Event(name='Recovery',propensity='gamma*self.I', Schange='1', Ichange='-1', order=1)
 DeathI = classes.Event(name='Death I',propensity='alpha*self.I', Schange='0', Ichange='-1', order=1)
 
-#Event vector, cause tidying up things is nice
+#Event vector, cause tidying up things is always nice
 Events = [ReproductionS, DeathS, DeathI, DispersalI, DispersalS, Extinction, Infection, Recovery]
 
 #Get initial lists and values in outputs
-#We want to get one list per Sx(t) and Ix(t) to store them easily in  dataframe at the end
+#We want to get one list per Sx(t) and Ix(t) to store them easily in a dataframe at the end
 for i in ListSites:
     Densities_out.append([i.effectifS])
     Densities_out.append([i.effectifI])
-#print('Bonjour les amish', Densities_out)
-#Get ready for the simulation
-#Further expansion : import multiprocessing to launch as many run as CPU in the same time
 
-#Main Loop
+#Get ready for the simulation
+#Further expansion idea : import multiprocessing to launch as many runs as CPUnits in the same time
+
+#Model main Loop
 while sim_time < tmax :
-    print('We have currently passed', sim_time,'time in the simulation')
+    print('We have currently passed', sim_time,'time in the simulation') # Kind of a loading bar
     vectime.append(sim_time) #Update time vector
 
     #Compute the propensities
     Propensities, Sum_propensities = fonctions.GetPropensites(ListSites, Events) # Get a vector of propensities ordered by event and by sites
-    SumS, SumI = fonctions.SumDensities(ListSites)
+    SumS, SumI = fonctions.SumDensities(ListSites) # Get total densities of species
 
     #print('Les props', Propensities)
     #print('Les sommes',Sum_propensities)
@@ -73,7 +72,7 @@ while sim_time < tmax :
     #Criticals = fonctions.GetCriticals(Propensities, ListSites, Events)
 
     #We now can compute vectors mu and sigma using previous shit
-    Mus = fonctions.ComputeMuNSigma(Sum_propensities, Events, ListSites) # As each statechange is 1 , 0, or -1 we have sigma = mu
+    Mus = fonctions.ComputeMuNSigma(Sum_propensities, Events) # As each statechange is 1 , 0, or -1 we have sigma = mu
     #print('les mumu', Mus)
 
     #Get epsilon_i
@@ -89,15 +88,15 @@ while sim_time < tmax :
         print('Direct Method performed')
         Tau = fonctions.DoDirectMethod(Propensities,Sum_propensities,Nexactsteps, Events,ListSites)
     else:
-        print('Lets leap baby')
+        print('Lets leap')
         #Here we do not compute TauPrimePrime to determine how much critical reactions occurs
         #We expect that random sample of the place of reactions will be equivalent
-        #As critical reactions in critical population will have low occurences
+        #As critical reactions in critical population will have low ocurrences
         Tau=TauPrime
         #print('Voici Tau', Tau)
-        #So we directly sample the kjs (number of a given event during tau) from a poisson distribution
+        #So we directly sample the kjs (number of realisation of a given event during tau) from a poisson distribution
         Poisson_means = np.multiply(Tau,np.array(Sum_propensities)) #Get ajx * tau from which we will sample the kjs
-        #print('Poisson', Poisson_means) # it's working we are so glad
+        #print('Poisson', Poisson_means) # it's working so we are glad
 
         #Now we sample the kjs in poisson law, aka the number of trigger of each event
         triggers = []
@@ -106,7 +105,7 @@ while sim_time < tmax :
             triggers.append(kj[0]) # The [0] is due to array structure of kj
         #print('Occurrences', triggers)
 
-        #Creating a vector with sites indexes, used later a put here to not be computed at each subloop iteration
+        #Creating a vector with sites indexes, used later and put here to not be computed at each subloop iteration
         sites_indexes = []
         for i in range(len(ListSites)):
             sites_indexes.append(i)
@@ -125,7 +124,7 @@ while sim_time < tmax :
             if Noccur == 0 : #Case where the event can't happen
                 trigger_persite=[0 for i in range(nbsite)]
             else : # Normal cases
-                trigger_persite = np.random.multinomial(Noccur, Probas) # Working 1st try, you're the best coder ever or what ?
+                trigger_persite = np.random.multinomial(Noccur, Probas)
             #print('Occurrences per sites', trigger_persite)
             #This part apply the effect of events in site populations
             for index, Site in enumerate(ListSites) :
@@ -143,23 +142,25 @@ while sim_time < tmax :
                         if roll4urlife > rho : SuccessfulMigrants += 1
                     #Here we distribute successful migrants among neighboring sites
                     #This part can be improved as neighboring rules become more complex, using a specific class 'network' to determine the neighbors
+                    #Implemented this way, i should be easy to simulate on any network type
                     for i in range(SuccessfulMigrants) :
                         index_sites = deepcopy(sites_indexes) # working copy of site indexes vector
-                        del index_sites[index]#Drop the current site from the list
+                        del index_sites[index]#Drop the current site from the list cause you can't emigrate to the place from which you departed
 
                         Index_destination = np.random.choice(index_sites) #Get index of destination site
 
                         #Add individual to destination
                         if abs(event.Schange) > 0 : #if S are dispersers
                             ListSites[Index_destination].effectifS += 1
-                        elif abs(event.Ichange) > 0 :
+                        elif abs(event.Ichange) > 0 : # if I are dispersers
                             #print('PYCHARM WAS HERE')
                             ListSites[Index_destination].effectifI += 1
-                        else : print('ERROR : disperser is neither S nor I and that is very curious !')
+                        else : print('ERROR : disperser is neither S nor I and that is very curious !') #This is useless, the error never raises
                 else:
                     #Multiply the state change in population by the number of triggers
-                    if event.name == 'Extinction' : #When extinction occur we need to retrieve densities values
-                        event.Schange=-Site.effectifS
+                    if event.name == 'Extinction' :
+                        #When extinction occur we need to retrieve densities values cause they're initialized to zero otherwise in class definition
+                        event.Schange=-Site.effectifS #I dont really understand why attribute is not protected but it's good news
                         event.Ichange=-Site.effectifI
                         #print('Event Schange', trigger_persite[index])
                         Site.effectifS += trigger_persite[index]*event.Schange
@@ -187,25 +188,29 @@ while sim_time < tmax :
         Densities_out[indexlist].append(i.effectifI)
         indexlist += 1
     #2. Propensities
+    #Not done yet but define a boolean IsTrackPropensity in sim options and track ioi = 1
 
-    # Break the main loop if there are no infected remaining
-    if SumI == 0: break
+    # Break the main loop if there are no infected remaining ( this happens essentially at start if the 1st infected dies)
+    if SumI == 0:
+        print('WARNING : ABORTED SIMULATION, No infected remaining')
+        break
 
-#Structuring outputs to get a .csv file
+#Structuring outputs to get a .csv file event if the loop has broken
 
 #Creating the dataframe
 data = pd.DataFrame(columns=['t'])
-for i in range(nbsite):
+for i in range(nbsite): # Define a column for each subpop and site index
     colname_s = 'S'+str(i)
     colname_i = 'I'+str(i)
     data[colname_s] = []
     data[colname_i] = []
 #Filling the dataframe
 for index,colname in enumerate(data):
-    if index == 0 : data[colname] = vectime # This one is OK
-    else : data[colname] = Densities_out[index-1]
+    if index == 0 : data[colname] = vectime
+    else : data[colname] = Densities_out[index-1] # I don't remember why i put -1, but it doesn't work if it's removed
 print(data)
 #Saving into .csv file
-data.to_csv('Metapop_Outputs.csv') # Where is it saved ?
+data.to_csv('Metapop_Outputs.csv')
+# Strange, csv is saved in model directory on lab computer but in User/Appdata/local/temp on personal computer...
 
 
