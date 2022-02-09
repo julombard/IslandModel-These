@@ -15,9 +15,9 @@ import pandas as pd
 #Simulation parameters
 sim_time = 0 # Simulation time (model time, not an iteration number)
 vectime = [0] # to keep t variable
-tmax = 40 # Ending time
+tmax = 100 # Ending time
 Nexactsteps = 20  # Number of steps to do if/when performing direct method
-nbsite = 10 # Number de sites
+nbsite = 20 # Number de sites
 Taillepop = 100 # Initial local population sizes
 Densities_out = [] # Collect densities outputs
 
@@ -65,6 +65,7 @@ while sim_time < tmax :
     #Compute the propensities
     Propensities, Sum_propensities = fonctions.GetPropensites(ListSites, Events) # Get a vector of propensities ordered by event and by sites
     SumS, SumI = fonctions.SumDensities(ListSites)
+
     #print('Les props', Propensities)
     #print('Les sommes',Sum_propensities)
 
@@ -152,14 +153,21 @@ while sim_time < tmax :
                         if abs(event.Schange) > 0 : #if S are dispersers
                             ListSites[Index_destination].effectifS += 1
                         elif abs(event.Ichange) > 0 :
-                            print('PYCHARM WAS HERE')
+                            #print('PYCHARM WAS HERE')
                             ListSites[Index_destination].effectifI += 1
-                            print('le migrant a til été receptionné ?',ListSites[Index_destination].effectifI)
                         else : print('ERROR : disperser is neither S nor I and that is very curious !')
                 else:
                     #Multiply the state change in population by the number of triggers
-                    Site.effectifS += trigger_persite[index]*event.Schange
-                    Site.effectifI += trigger_persite[index]*event.Ichange
+                    if event.name == 'Extinction' : #When extinction occur we need to retrieve densities values
+                        event.Schange=-Site.effectifS
+                        event.Ichange=-Site.effectifI
+                        #print('Event Schange', trigger_persite[index])
+                        Site.effectifS += trigger_persite[index]*event.Schange
+                        #print('Effectif après extinction', Site.effectifS)
+                        Site.effectifI += trigger_persite[index]*event.Ichange
+                    else :
+                        Site.effectifS += trigger_persite[index] * event.Schange
+                        Site.effectifI += trigger_persite[index] * event.Ichange
 
     #Update time
     sim_time += Tau
@@ -180,10 +188,11 @@ while sim_time < tmax :
         indexlist += 1
     #2. Propensities
 
+    # Break the main loop if there are no infected remaining
+    if SumI == 0: break
 
 #Structuring outputs to get a .csv file
 
-print('boubou',len(Densities_out))
 #Creating the dataframe
 data = pd.DataFrame(columns=['t'])
 for i in range(nbsite):
@@ -191,12 +200,12 @@ for i in range(nbsite):
     colname_i = 'I'+str(i)
     data[colname_s] = []
     data[colname_i] = []
-print('the DF', data)
-
+#Filling the dataframe
 for index,colname in enumerate(data):
     if index == 0 : data[colname] = vectime # This one is OK
     else : data[colname] = Densities_out[index-1]
 print(data)
-
+#Saving into .csv file
+data.to_csv('Metapop_Outputs.csv') # Where is it saved ?
 
 

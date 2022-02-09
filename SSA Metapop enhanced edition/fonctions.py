@@ -104,7 +104,6 @@ def GetEpsilonI(SS, SI):
     return out
 
 def GetTauPrime(Epsis, Mus):
-    print('Coucou attention hahah', Epsis, Mus)
     Tau_candidates = []
     Tau_finalists =[]
     for i in range(len(Mus)): # Get all Tau candidates (2 per specie)
@@ -120,7 +119,7 @@ def GetTauPrime(Epsis, Mus):
         candidates.append(upperterm/ abs(Mus[i]))
         candidates.append(upperterm_squared/abs(Mus[i])) # No need to square because mu = sigma
         Tau_candidates.append(candidates)
-    print('Tau candidates', Tau_candidates)
+    #print('Tau candidates', Tau_candidates)
     for i in range(len(Tau_candidates)): # get the tau 'finalists' (1 per specie)
         Tau_finalists.append(min(Tau_candidates[i]))
     TauPrime = min(Tau_finalists) # TauPrime is the minimum of all
