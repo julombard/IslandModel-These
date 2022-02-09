@@ -70,7 +70,7 @@ def ComputeMuNSigma(SumPropensities , Events, Sites):
     Output_vector = []
 
     for index, i in enumerate(Events) :
-        if i == 'epsilon':
+        if i.name == 'Extinction':
             continue
         elif i.Schange < 0 : # Case where an S individual is depleted
             vij = i.Schange

@@ -104,6 +104,12 @@ while sim_time < tmax :
             kj = np.random.poisson(i,1)
             triggers.append(kj[0]) # The [0] is due to array structure of kj
         #print('Occurrences', triggers)
+
+        #Creating a vector with sites indexes, used later a put here to not be computed at each subloop iteration
+        sites_indexes = []
+        for i in range(len(ListSites)):
+            sites_indexes.append(i)
+
         #Now we sample the sites where events will occur from multinomial law
         #And apply the effect of event
         for index,event in enumerate(Events) : # For each event
@@ -137,21 +143,18 @@ while sim_time < tmax :
                     #Here we distribute successful migrants among neighboring sites
                     #This part can be improved as neighboring rules become more complex, using a specific class 'network' to determine the neighbors
                     for i in range(SuccessfulMigrants) :
-                        #Determine which site will receive the dispersing individual
-                        receiving_sites = deepcopy(ListSites)# Create a working copy of sites
-                        #print('receivers', receiving_sites)
-                        del receiving_sites[index] # removing departure site from the copy
-                        #print('receivers post suppression', receiving_sites)
-                        site_destination = np.random.choice(receiving_sites) # destination is a site object
-                        #print('The destination is', site_destination)
+                        index_sites = deepcopy(sites_indexes) # working copy of site indexes vector
+                        del index_sites[index]#Drop the current site from the list
 
-                        #add individual to destination
+                        Index_destination = np.random.choice(index_sites) #Get index of destination site
+
+                        #Add individual to destination
                         if abs(event.Schange) > 0 : #if S are dispersers
-                            site_destination.effectifS += 1
+                            ListSites[Index_destination].effectifS += 1
                         elif abs(event.Ichange) > 0 :
                             print('PYCHARM WAS HERE')
-                            site_destination.effectifI += 1
-                            print('le migrant a til été receptionné ?',site_destination.effectifI)
+                            ListSites[Index_destination].effectifI += 1
+                            print('le migrant a til été receptionné ?',ListSites[Index_destination].effectifI)
                         else : print('ERROR : disperser is neither S nor I and that is very curious !')
                 else:
                     #Multiply the state change in population by the number of triggers
