@@ -12,13 +12,13 @@ import pandas as pd
 #Damn efficient compared to previous try (on lab laptop 100 sites simulated over 16K iterations took 2'30)
 
 #Simulation parameters
+np.random.seed(0) #Set seed for reproducibility
 sim_time = 0 # Simulation time (model time, not an iteration number)
 vectime = [0] # to keep t variable
-tmax = 100 # Ending time
+tmax = 40 # Ending time
 Nexactsteps = 20  # Number of steps to do if/when performing direct method
-nbsite = 100 # Number de sites
+nbsite = 20 # Number de sites
 Taillepop = 100 # Initial local population sizes
-Densities_out = [] # Collect densities outputs
 
 #Model parameters
 beta = 0.05  #Infectious contact rate
@@ -46,6 +46,13 @@ DeathI = classes.Event(name='Death I',propensity='alpha*self.I', Schange='0', Ic
 
 #Event vector, cause tidying up things is always nice
 Events = [ReproductionS, DeathS, DeathI, DispersalI, DispersalS, Extinction, Infection, Recovery]
+
+#Initializing outputs storage
+Densities_out = [] # Collect densities outputs
+Propensities_out =[] # Collect propensities outputs
+IsTrackPropensites = False #Set false/ true to not track/track propensities
+for i in range(len(Events)):
+    Propensities_out.append([0]) #Store times series of propensities
 
 #Get initial lists and values in outputs
 #We want to get one list per Sx(t) and Ix(t) to store them easily in a dataframe at the end
@@ -188,6 +195,12 @@ while sim_time < tmax :
         Densities_out[indexlist].append(i.effectifI)
         indexlist += 1
     #2. Propensities
+    if IsTrackPropensites == True :
+        Sum_propensities # Propensities of each event in a list sorted by event
+        for index,propensitiy in enumerate(Sum_propensities) :
+            Propensities_out[index].append(propensitiy)
+
+
     #Not done yet but define a boolean IsTrackPropensity in sim options and track ioi = 1
 
     # Break the main loop if there are no infected remaining ( this happens essentially at start if the 1st infected dies)
@@ -196,8 +209,21 @@ while sim_time < tmax :
         break
 
 #Structuring outputs to get a .csv file event if the loop has broken
+if IsTrackPropensites == True : #if we track propensities
+    #Creating propensities dataframe
+    dataprop = pd.DataFrame(columns=['t'])
+    for event in Events :
+        EventName = event.name
+        dataprop[EventName]= []
+    #Filling the dataframe
+    for index, colname in enumerate(dataprop):
+        if index == 0 : dataprop[colname] = vectime
+        else : dataprop[colname] = Propensities_out[index-1]
+    #Saving into .csv file
+    dataprop.to_csv('Propensities_outputs.csv')
 
-#Creating the dataframe
+
+#Creating the time series dataframe
 data = pd.DataFrame(columns=['t'])
 for i in range(nbsite): # Define a column for each subpop and site index
     colname_s = 'S'+str(i)

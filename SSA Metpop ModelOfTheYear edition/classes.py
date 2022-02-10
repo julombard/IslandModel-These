@@ -1,4 +1,4 @@
-# Model parameters
+#Model parameters
 beta = 0.005  # Infectious contact rate
 r = 1.5  # Per capita growth rate
 k = 1000  # Carrying capacity
@@ -9,12 +9,13 @@ rho = 0.1  # Dispersal Cost
 epsilon = 0.1  # Extinction rate
 
 class Site(): #Site object containing (non explicit) individuals
-    def __init__(self,effectifS,effectifI):
+    def __init__(self,effectifS,effectifI, *args): #First try with arg way to implement feature unsure
         self.effectifS = effectifS #S density
         self.effectifI = effectifI #I density
         #self.traitvalue = traitvalue Affect a trait to each individual (vector) without being individual-based
         #self.pos = pos (tuple) : for future improvements, position of the site on the network grid, as matrix coordinates
         #self.neighbor = [] : for future, maybe including neighbors as an attribute (so it's computed only once)
+
 class Event():
     def __init__(self,name, propensity, Schange, Ichange, order):
         self.name = name # Event name in letter and not in memory address, handful to identify what's happening

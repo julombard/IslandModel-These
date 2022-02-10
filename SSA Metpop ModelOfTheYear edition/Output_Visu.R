@@ -15,6 +15,20 @@ lines(Data$t, Data$I0, col = 'red')
 plot(Data$t, Data$S7, type = 'l', col ='blue')
 lines(Data$t, Data$I7, col = 'red')
 
+################################ PROPENSITIES CHECK ####################################
+Prop_outputs <- read_csv("Propensities_outputs.csv")
+
+plot(Prop_outputs$t, Prop_outputs$`Reproduction S`, type = 'l', col = 1)
+lines(Prop_outputs$t, Prop_outputs$`Death S`, col = 2)
+lines(Prop_outputs$t, Prop_outputs$`Death I`, col = 3)
+lines(Prop_outputs$t, Prop_outputs$`Dispersal I`, col = 5)
+lines(Prop_outputs$t, Prop_outputs$`Dispersal S`, col = 6)
+lines(Prop_outputs$t, Prop_outputs$Extinction, col = 7)
+lines(Prop_outputs$t, Prop_outputs$Infection, col = 8)
+lines(Prop_outputs$t, Prop_outputs$Recovery, col = 9)
+
+
+
 ########################## GLOBAL DENSITIES AND PREVALENCE #############################
 taille_col = (length(Data)-1) # Number of populations columns 
 
