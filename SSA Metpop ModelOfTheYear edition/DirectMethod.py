@@ -59,11 +59,6 @@ while sim_time < tmax :
     print('We have currently passed', sim_time,'time in the simulation') # Kind of a loading bar
     vectime.append(sim_time) #Update time vector
 
-    # Creating a vector with sites indexes, used later and put here to not be computed at each subloop iteration
-    sites_indexes = []
-    for i in range(len(ListSites)):
-        sites_indexes.append(i)
-
     # Compute the propensities
     Propensities, Sum_propensities = fonctions.GetPropensites(ListSites,Events)  # Get a vector of propensities ordered by event and by sites
     SumS, SumI = fonctions.SumDensities(ListSites)  # Get total densities of species
