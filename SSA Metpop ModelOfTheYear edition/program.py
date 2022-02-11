@@ -12,7 +12,7 @@ import pandas as pd
 #Damn efficient compared to previous try (on lab laptop 100 sites simulated over 16K iterations took 2'30)
 
 #Simulation parameters
-np.random.seed(0) #Set seed for reproducibility
+np.random.seed(2) #Set seed for reproducibility
 sim_time = 0 # Simulation time (model time, not an iteration number)
 vectime = [0] # to keep t variable
 tmax = 40 # Ending time

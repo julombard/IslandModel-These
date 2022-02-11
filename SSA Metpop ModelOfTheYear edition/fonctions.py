@@ -168,19 +168,17 @@ def DoDirectMethod(Propensities, Sum_propensities, exactsteps, events, sites):
             # Here we distribute successful migrants among neighboring sites
             # This part can be improved as neighboring rules become more complex, using a specific class 'network' to determine the neighbors
             if SuccessfulMigrants == 1:
-                # Determine which site will receive the dispersing individual
-                receiving_sites = deepcopy(sites)  # Create a working copy of sites
-                # print('receivers', receiving_sites)
-                del receiving_sites[NextPlaceIndex]  # removing departure site from the copy
-                # print('receivers post suppression', receiving_sites)
-                site_destination = np.random.choice(receiving_sites)  # destination is a site object
-                # print('The destination is', site_destination)
+                index_sites = deepcopy(sites_indexes)  # working copy of site indexes vector
+                del index_sites[
+                    index]  # Drop the current site from the list cause you can't emigrate to the place from which you departed
+
+                Index_destination = np.random.choice(index_sites)  # Get index of destination site
 
                 # add individual to destination
                 if abs(event.Schange) > 0:  # if S are dispersers
-                    site_destination.effectifS += 1
+                    ListSites[Index_destination].effectifS += 1
                 elif abs(event.Ichange) > 0:
-                    site_destination.effectifI += 1
+                    ListSites[Index_destination].effectifI += 1
                 else:
                     pass
                     #print('There was only one migrant, but he died. Nothing happend')
