@@ -132,13 +132,13 @@ def GetTauPrime(Epsis, Mus):
 
     return TauPrime
 
-def DoDirectMethod(Propensities, Sum_propensities, exactsteps, events, sites):
+def DoDirectMethod(Propensities, Sum_propensities, exactsteps, events, sites, index_sites):
     for i in range(exactsteps):
         r1 = np.random.uniform(0,1,1) #Draw random numbers
         a0 = sum(Sum_propensities) # Overall propensity
 
         Tau = (1/a0) * np.log(1/r1) #Time increment
-        Probas = [i / a0 for i in Sum_propensities] #Individual pro
+        Probas = [i / a0 for i in Sum_propensities] #Individual propensity
         NextReaction = list(np.random.multinomial(1, Probas)) # List to get index easily
         NextReactionIndex = NextReaction.index(1)
         #print('The next reaction Index', NextReactionIndex)
@@ -155,6 +155,7 @@ def DoDirectMethod(Propensities, Sum_propensities, exactsteps, events, sites):
         # This part apply the effect of events in site populations
         event = events[NextReactionIndex]
         site = sites[NextPlaceIndex]
+
         if 'Dispersal' in event.name:
             # Multiply the state change in population by the number of triggers
             site.effectifS +=  event.Schange
@@ -169,11 +170,16 @@ def DoDirectMethod(Propensities, Sum_propensities, exactsteps, events, sites):
             # This part can be improved as neighboring rules become more complex, using a specific class 'network' to determine the neighbors
             if SuccessfulMigrants == 1:
 
+                sites_index = deepcopy(index_sites)  # working copy of site indexes vector
+                del index_sites[NextPlaceIndex]  # Drop the current site from the list cause you can't emigrate to the place from which you departed
+
+                Index_destination = np.random.choice(index_sites)  # Get index of destination site
+
                 # add individual to destination
                 if abs(event.Schange) > 0:  # if S are dispersers
-                    sites[NextPlaceIndex].effectifS += 1
+                    sites[Index_destination].effectifS += 1
                 elif abs(event.Ichange) > 0:
-                    sites[NextPlaceIndex].effectifI += 1
+                    sites[Index_destination].effectifI += 1
                 else:
                     pass
                     #print('There was only one migrant, but he died. Nothing happend')

@@ -91,11 +91,15 @@ while sim_time < tmax :
     # Now that main intermediary computations are done, let's get to the main algorithm Decision tree
     aox = sum(Sum_propensities)
 
+    # Creating a vector with sites indexes, used later and put here to not be computed at each subloop iteration
+    sites_indexes = []
+    for i in range(len(ListSites)):
+        sites_indexes.append(i)
+
     if TauPrime < 10/aox : # Take 10/aox 1 is left for ignoring this part
         print('Direct Method performed')
-        Tau = fonctions.DoDirectMethod(Propensities,Sum_propensities,Nexactsteps, Events,ListSites)
+        Tau = fonctions.DoDirectMethod(Propensities,Sum_propensities,Nexactsteps, Events,ListSites, sites_indexes)
     else:
-        print('Lets leap')
         #Here we do not compute TauPrimePrime to determine how much critical reactions occurs
         #We expect that random sample of the place of reactions will be equivalent
         #As critical reactions in critical population will have low ocurrences
@@ -111,11 +115,6 @@ while sim_time < tmax :
             kj = np.random.poisson(i,1)
             triggers.append(kj[0]) # The [0] is due to array structure of kj
         #print('Occurrences', triggers)
-
-        #Creating a vector with sites indexes, used later and put here to not be computed at each subloop iteration
-        sites_indexes = []
-        for i in range(len(ListSites)):
-            sites_indexes.append(i)
 
         #Now we sample the sites where events will occur from multinomial law
         #And apply the effect of event

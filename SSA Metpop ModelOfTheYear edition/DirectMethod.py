@@ -10,8 +10,8 @@ import numpy as np
 np.random.seed(2) #Set seed for reproducibility
 sim_time = 0 # Simulation time (model time, not an iteration number)
 vectime = [0] # to keep t variable
-tmax = 40 # Ending time
-Nexactsteps = 20  # Number of steps to do if/when performing direct method
+tmax = 0.01 # Ending time
+Nexactsteps = 1  # Number of steps to do if/when performing direct method
 nbsite = 20 # Number de sites
 Taillepop = 100 # Initial local population sizes
 
@@ -59,10 +59,15 @@ while sim_time < tmax :
     print('We have currently passed', sim_time,'time in the simulation') # Kind of a loading bar
     vectime.append(sim_time) #Update time vector
 
+    # Creating a vector with sites indexes, used later and put here to not be computed at each subloop iteration
+    sites_indexes = []
+    for i in range(len(ListSites)):
+        sites_indexes.append(i)
+
     # Compute the propensities
     Propensities, Sum_propensities = fonctions.GetPropensites(ListSites,Events)  # Get a vector of propensities ordered by event and by sites
     SumS, SumI = fonctions.SumDensities(ListSites)  # Get total densities of species
-    Tau = fonctions.DoDirectMethod(Propensities, Sum_propensities, Nexactsteps, Events, ListSites)
+    Tau = fonctions.DoDirectMethod(Propensities, Sum_propensities, Nexactsteps, Events, ListSites, sites_indexes)
 
     #Update time
     sim_time += Tau
@@ -81,12 +86,9 @@ while sim_time < tmax :
         indexlist += 1
     #2. Propensities
     if IsTrackPropensites == True :
-        Sum_propensities # Propensities of each event in a list sorted by event
+        # Propensities of each event in a list sorted by event
         for index,propensitiy in enumerate(Sum_propensities) :
             Propensities_out[index].append(propensitiy)
-
-
-    #Not done yet but define a boolean IsTrackPropensity in sim options and track ioi = 1
 
     # Break the main loop if there are no infected remaining ( this happens essentially at start if the 1st infected dies)
     if SumI == 0:
